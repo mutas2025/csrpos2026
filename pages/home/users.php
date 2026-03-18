@@ -49,47 +49,21 @@
     </nav>
 
     <!-- Main Sidebar -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <!-- Brand Logo -->
-        <a href="#" class="brand-link">
-            <img src="../../dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-            <span class="brand-text font-weight-light">AdminLTE 3</span>
-        </a>
-        <div class="sidebar">
-            <!-- Sidebar Menu -->
-            <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                    <li class="nav-item">
-                        <a href="#" class="nav-link active">
-                            <i class="nav-icon fas fa-users"></i>
-                            <p>Users</p>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </aside>
+<!-- Include Sidebar -->
+<?php include '../../pages/sidebar/sidebar.php'; ?> 
 
     <!-- Content Wrapper -->
     <div class="content-wrapper">
-        <!-- Content Header -->
         <div class="content-header">
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
                         <h1 class="m-0">User Management</h1>
                     </div>
-                    <div class="col-sm-6">
-                        <ol class="breadcrumb float-sm-right">
-                            <li class="breadcrumb-item"><a href="#">Home</a></li>
-                            <li class="breadcrumb-item active">Users</li>
-                        </ol>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main content -->
         <section class="content">
             <div class="container-fluid">
                 <div class="row">
@@ -138,30 +112,12 @@
                 <form id="userForm">
                     <div class="modal-body">
                         <input type="hidden" name="objid" id="user_objid">
-                        <div class="form-group">
-                            <label>ID No.</label>
-                            <input type="text" name="idno" id="user_idno" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" name="fullname" id="user_fullname" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Username</label>
-                            <input type="text" name="username" id="user_username" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" name="email" id="user_email" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Contact No.</label>
-                            <input type="text" name="contactno" id="user_contactno" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Department</label>
-                            <input type="text" name="department" id="user_department" class="form-control" required>
-                        </div>
+                        <div class="form-group"><label>ID No.</label><input type="text" name="idno" id="user_idno" class="form-control" required></div>
+                        <div class="form-group"><label>Full Name</label><input type="text" name="fullname" id="user_fullname" class="form-control" required></div>
+                        <div class="form-group"><label>Username</label><input type="text" name="username" id="user_username" class="form-control" required></div>
+                        <div class="form-group"><label>Email</label><input type="email" name="email" id="user_email" class="form-control" required></div>
+                        <div class="form-group"><label>Contact No.</label><input type="text" name="contactno" id="user_contactno" class="form-control" required></div>
+                        <div class="form-group"><label>Department</label><input type="text" name="department" id="user_department" class="form-control" required></div>
                         <div class="form-group">
                             <label>User Type</label>
                             <select name="user_type" id="user_user_type" class="form-control" required>
@@ -210,11 +166,17 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
 
 <script>
+    // ===================================================================
+    // IMPORTANT: CHECK THIS PATH
+    // If this file is in /pages/users.php, and api is in /api/routes.php
+    // then the path should be correct.
+    // If your folder structure is different, fix this line:
+    // ===================================================================
     const API_URL = '../../api/routes.php';
+    
     var table;
 
     $(function () {
-        // Initialize DataTable
         table = $('#users-table').DataTable({
             "responsive": true,
             "lengthChange": false,
@@ -223,7 +185,24 @@
             "ajax": {
                 "url": API_URL + "/users",
                 "type": "GET",
-                "dataSrc": "data"
+                // This function handles the response before DataTables uses it
+                "dataSrc": function(json) {
+                    console.log("API Response:", json); // DEBUG: Check your browser console (F12)
+                    
+                    if (json.status === 'success') {
+                        return json.data;
+                    } else {
+                        console.error("API returned error:", json.message);
+                        // Alert user if there is a backend error message
+                        Swal.fire("Backend Error", json.message, "error"); 
+                        return []; // Return empty array to prevent crash
+                    }
+                },
+                // This catches connection errors (404, 500, etc.)
+                "error": function (xhr, error, thrown) {
+                    console.error("AJAX Error:", error, thrown);
+                    Swal.fire("Connection Error", "Could not connect to API: " + API_URL, "error");
+                }
             },
             "columns": [
                 { "data": "idno" },
@@ -236,14 +215,12 @@
                 { 
                     "data": null,
                     "render": function(data, type, row) {
-                        // Using objid for actions as it is the primary key
                         return `
                         <div class="dropdown">
-                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
                                 Actions
                             </button>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item" href="#" onclick="approveUser('${row.objid}')"><i class="fas fa-check mr-2"></i>Approve</a>
                                 <a class="dropdown-item" href="#" onclick="updateUser('${row.objid}')"><i class="fas fa-edit mr-2"></i>Update</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="#" onclick="deleteUser('${row.objid}')"><i class="fas fa-trash mr-2"></i>Delete</a>
@@ -257,22 +234,17 @@
         }).buttons().container().appendTo('#users-table_wrapper .col-md-6:eq(0)');
     });
 
-    // Open Add Modal
     function openAddModal() {
         $('#modalTitle').text('Add New User');
         $('#userForm')[0].reset();
         $('#user_objid').val('');
-        $('#passwordGroup').show();
         $('#user_password').prop('required', true);
         $('#userModal').modal('show');
     }
 
-    // Update User (Load Data to Modal)
     function updateUser(objid) {
         $('#modalTitle').text('Update User');
         $('#user_password').prop('required', false);
-        
-        // Fetch user details from current table data
         var rowData = table.rows().data().toArray().find(r => r.objid == objid);
         
         if(rowData) {
@@ -284,19 +256,15 @@
             $('#user_contactno').val(rowData.contactno);
             $('#user_department').val(rowData.department);
             $('#user_user_type').val(rowData.user_type);
-            $('#user_password').val(''); // Clear password field
-            
+            $('#user_password').val(''); 
             $('#userModal').modal('show');
         }
     }
 
-    // Save User (Add or Update)
     $('#userForm').on('submit', function(e) {
         e.preventDefault();
-        
-        var formData = $(this).serializeArray();
         var payload = {};
-        $.each(formData, function(i, field) {
+        $.each($(this).serializeArray(), function(i, field) {
             payload[field.name] = field.value;
         });
 
@@ -307,12 +275,8 @@
         if (isUpdate) {
             method = 'PUT';
             url = API_URL + '/users/' + payload.objid;
-            // Remove password if empty on update
-            if(payload.password === '') {
-                delete payload.password;
-            }
+            if(payload.password === '') delete payload.password;
         } else {
-            // Add repassword for registration logic
             payload.repassword = payload.password;
         }
 
@@ -329,22 +293,16 @@
                 } else {
                     Swal.fire('Error!', res.message, 'error');
                 }
-            },
-            error: function() {
-                Swal.fire('Error!', 'Connection error', 'error');
             }
         });
     });
 
-    // Delete User
     function deleteUser(objid) {
         Swal.fire({
             title: 'Are you sure?',
             text: "You won't be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
@@ -362,12 +320,6 @@
                 });
             }
         });
-    }
-
-    // Placeholder for Approve User
-    function approveUser(objid) {
-        Swal.fire('Info', 'Approval logic for user ID: ' + objid + ' can be implemented here.', 'info');
-        // You would typically send a POST/PUT request to update a 'status' field in the DB
     }
 </script>
 </body>
