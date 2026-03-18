@@ -90,7 +90,7 @@ class UsersController {
 }
 public function getUsers() {
         try {
-            $stmt = $this->con->prepare("SELECT idno, fullname, username, email, contactno, department, user_type FROM tbl_user");
+            $stmt = $this->con->prepare("SELECT idno, fullname, username, email, contactno, department, user_type FROM tbl_users");
             $stmt->execute();
             $users = $stmt->fetchAll();
             return ['status' => 'success', 'data' => $users];
