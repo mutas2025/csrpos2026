@@ -33,7 +33,7 @@
           <ul class="nav nav-treeview">
             <!-- Users Link -->
             <li class="nav-item">
-              <a href="home.php" class="nav-link">
+              <a href="users.php" class="nav-link">
                 <i class="nav-icon fas fa-user"></i>
                 <p>Users</p>
               </a>
@@ -57,13 +57,7 @@
           </ul>
         </li>
 
-        <!-- Other Parent Example -->
-        <li id="franchise_sidebar" class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="nav-icon fas fa-copy"></i>
-            <p>Other Menu</p>
-          </a>
-        </li>
+
 
       </ul>
     </nav>
