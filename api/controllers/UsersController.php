@@ -1,39 +1,24 @@
 <?php
-// RegisterController.php
-// This class is responsible for handling user registration requests that
-// arrive via the API.  It performs validation, checks for duplicates, hashes
-// passwords, and inserts the new user record into the database.
+// UsersController.php
+// This class handles user management logic including registration,
+// listing, updating, and deleting users.
 
-// We need access to the database connection, which is created in db_connect.php.
-// `dirname(__DIR__)` moves up one directory (from controllers to api) to locate
-// the config folder regardless of the current working directory.
 require_once dirname(__DIR__) . '/config/db_connect.php';
 
 class UsersController {
-    // store the PDO database connection here so other methods can use it
+    // Store the PDO database connection
     private $con;
 
     public function __construct() {
-        // the global $con variable is defined in db_connect.php; capture it
         global $con;
         $this->con = $con;
     }
 
     /**
-     * Create a new user.
-     *
-     * This method expects an associative array `$data` containing the form
-     * fields sent by the client.  It returns an array describing the result
-     * (status and message), which the router will encode as JSON.
-     *
-     * @param array $data Associative array containing registration fields.
-     * @return array Response array with status and message (and optionally data).
+     * Create a new user (Register).
      */
     public function register(array $data) {
-        // ------------------------------------------------------------------
-        // 1. Extract and sanitise input values.  `?? ''` ensures we don't get
-        // undefined index errors if a field is missing.  `trim()` removes extra
-        // whitespace that users sometimes accidentally include.
+        // 1. Extract and sanitise input
         $idno       = trim($data['idno'] ?? '');
         $fullname   = trim($data['fullname'] ?? '');
         $username   = trim($data['username'] ?? '');
@@ -44,35 +29,27 @@ class UsersController {
         $department = trim($data['department'] ?? '');
         $user_type  = trim($data['user_type'] ?? '');
 
-        // ------------------------------------------------------------------
-        // 2. Basic validation: make sure none of the required fields are empty.
+        // 2. Validation
         if (empty($idno) || empty($fullname) || empty($username) || empty($password) || empty($repassword)
             || empty($email) || empty($contactno) || empty($department) || empty($user_type)) {
             return ['status' => 'error', 'message' => 'All fields are required.'];
         }
 
-        // passwords must match each other
         if ($password !== $repassword) {
             return ['status' => 'error', 'message' => 'Passwords do not match.'];
         }
 
-        // ------------------------------------------------------------------
-        // 3. Ensure username/email are unique in the database.
+        // 3. Check for duplicates
         $stmt = $this->con->prepare("SELECT COUNT(*) FROM tbl_users WHERE username = ? OR email = ?");
         $stmt->execute([$username, $email]);
-        $count = $stmt->fetchColumn();
-        if ($count > 0) {
-            // found a conflict
+        if ($stmt->fetchColumn() > 0) {
             return ['status' => 'error', 'message' => 'Username or email already in use.'];
         }
 
-        // ------------------------------------------------------------------
-        // 4. Hash the password before storing it.  `password_hash` uses a secure
-        // algorithm and should be preferred over older functions like md5().
+        // 4. Hash password
         $hash = password_hash($password, PASSWORD_DEFAULT);
 
-        // 5. Insert the new user record.  We include `created_at` using SQL's
-        // NOW() function so the database records the timestamp.
+        // 5. Insert
         $sql = "INSERT INTO tbl_users
                    (idno, fullname, username, password, email, contactno, department, user_type, created_at)
                 VALUES
@@ -80,22 +57,96 @@ class UsersController {
         try {
             $ins = $this->con->prepare($sql);
             $ins->execute([$idno, $fullname, $username, $hash, $email, $contactno, $department, $user_type]);
-
             return ['status' => 'success', 'message' => 'Registration successful.'];
         } catch (PDOException $e) {
-            // In production you would log this error instead of exposing it.
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
 
+    /**
+     * Get all users.
+     * Updated to include 'objid' so the frontend can use it for edits/deletes.
+     */
     public function getUsers() {
         try {
-            $stmt = $this->con->prepare("SELECT idno, fullname, username, email, contactno, department, user_type FROM tbl_users");
+            // Added 'objid' to the select list
+            $stmt = $this->con->prepare("SELECT objid, idno, fullname, username, email, contactno, department, user_type FROM tbl_users");
             $stmt->execute();
-            $users = $stmt->fetchAll();
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['status' => 'success', 'data' => $users];
         } catch (PDOException $e) {
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
+
+    /**
+     * Update an existing user.
+     */
+    public function updateUser(array $data) {
+        // 1. Extract ID and data
+        $objid = $data['objid'] ?? '';
+        $idno = trim($data['idno'] ?? '');
+        $fullname = trim($data['fullname'] ?? '');
+        $username = trim($data['username'] ?? '');
+        $email = trim($data['email'] ?? '');
+        $contactno = trim($data['contactno'] ?? '');
+        $department = trim($data['department'] ?? '');
+        $user_type = trim($data['user_type'] ?? '');
+        $password = $data['password'] ?? ''; // Optional
+
+        if (empty($objid)) {
+            return ['status' => 'error', 'message' => 'User ID is required.'];
+        }
+
+        // 2. Build SQL dynamically based on whether password is being updated
+        try {
+            if (!empty($password)) {
+                // Update with password
+                $hash = password_hash($password, PASSWORD_DEFAULT);
+                $sql = "UPDATE tbl_users SET 
+                            idno = ?, fullname = ?, username = ?, email = ?, 
+                            contactno = ?, department = ?, user_type = ?, password = ?
+                        WHERE objid = ?";
+                $stmt = $this->con->prepare($sql);
+                $stmt->execute([$idno, $fullname, $username, $email, $contactno, $department, $user_type, $hash, $objid]);
+            } else {
+                // Update without password
+                $sql = "UPDATE tbl_users SET 
+                            idno = ?, fullname = ?, username = ?, email = ?, 
+                            contactno = ?, department = ?, user_type = ?
+                        WHERE objid = ?";
+                $stmt = $this->con->prepare($sql);
+                $stmt->execute([$idno, $fullname, $username, $email, $contactno, $department, $user_type, $objid]);
+            }
+
+            return ['status' => 'success', 'message' => 'User updated successfully.'];
+        } catch (PDOException $e) {
+            return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Delete a user by ID.
+     * This fixes the "Call to undefined method" error.
+     */
+    public function deleteUser($id) {
+        if (empty($id)) {
+            return ['status' => 'error', 'message' => 'User ID is required.'];
+        }
+
+        try {
+            $sql = "DELETE FROM tbl_users WHERE objid = ?";
+            $stmt = $this->con->prepare($sql);
+            $stmt->execute([$id]);
+
+            if ($stmt->rowCount() > 0) {
+                return ['status' => 'success', 'message' => 'User deleted successfully.'];
+            } else {
+                return ['status' => 'error', 'message' => 'User not found.'];
+            }
+        } catch (PDOException $e) {
+            return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
 }
+?>

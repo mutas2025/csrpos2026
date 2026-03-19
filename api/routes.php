@@ -15,7 +15,6 @@ error_reporting(E_ALL);
 // ============================================================================
 // SECTION 2: HTTP HEADERS
 // ============================================================================
-// Allow access from any origin (adjust to specific domain in production)
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -60,7 +59,6 @@ if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
 // ============================================================================
 
 // Get the directory name of this script relative to the web root
-// e.g., if url is localhost/project/api/routes.php, base is /project/api
  $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
  $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
@@ -68,7 +66,7 @@ if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
  $pathInfo = substr($uri, strlen($scriptName));
  $pathInfo = trim($pathInfo, '/');
 
-// Remove 'routes.php' if it appears in the path (handles explicit file calls)
+// Remove 'routes.php' if it appears in the path
  $pathInfo = str_replace('routes.php', '', $pathInfo);
  $pathInfo = trim($pathInfo, '/');
 
