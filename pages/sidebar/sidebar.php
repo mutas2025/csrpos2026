@@ -13,7 +13,7 @@
         
         <!-- Dashboard / Statistics -->
         <li id="statistics_sidebar" class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="home.php" class="nav-link">
             <i class="nav-icon fas fa-tachometer-alt"></i>
             <p>Dashboard</p>
           </a>
@@ -21,7 +21,7 @@
 
         <!-- Management Menu (Parent) -->
         <li id="management_sidebar" class="nav-item menu-open">
-          <a href="#" class="nav-link">
+          <a href="home.php" class="nav-link">
             <i class="nav-icon fas fa-users-cog"></i>
             <p>
               Management
@@ -41,7 +41,7 @@
             
             <!-- Products Link -->
             <li class="nav-item">
-              <a href="home.php?tab=products" class="nav-link">
+              <a href="productlist.php" class="nav-link">
                 <i class="nav-icon fas fa-box"></i>
                 <p>Products</p>
               </a>
@@ -49,7 +49,7 @@
 
             <!-- Customer Link -->
             <li class="nav-item">
-              <a href="home.php?tab=customers" class="nav-link">
+              <a href="customerlist.php" class="nav-link">
                 <i class="nav-icon fas fa-id-card"></i>
                 <p>Customers</p>
               </a>
