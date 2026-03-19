@@ -1,6 +1,5 @@
 <?php 
-
-// This file is now a pure frontend view. 
+// This file is a pure frontend view. 
 // No database connections or SQL queries are handled here directly.
 // All data is fetched from the API (routes.php) via JavaScript.
 ?> 
@@ -250,7 +249,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
 
     <script>
-        // API Endpoint
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
         const API_URL = '../../api/routes.php';
         var userTable, productTable, customerTable;
 
@@ -265,7 +266,7 @@
             loadData('products');
             loadData('customers');
 
-            // Tab change event to ensure proper rendering (optional fix for hidden tabs)
+            // Tab change event to ensure proper rendering
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
                 $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
             });
@@ -275,35 +276,36 @@
         // DATA LOADING (GET REQUESTS)
         // ==========================================
         function loadData(type) {
+            // Show loader only for initial load feeling, or keep silent for background updates
+            console.log(`Fetching ${type}...`);
+            
             fetch(`${API_URL}/${type}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
                 .then(data => {
                     if (data.status === 'success') {
                         if (type === 'users') populateUserTable(data.data);
                         else if (type === 'products') populateProductTable(data.data);
                         else if (type === 'customers') populateCustomerTable(data.data);
                     } else {
-                        console.error('Error loading ' + type, data.message);
+                        console.error('API Error loading ' + type, data.message);
                     }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => console.error('Fetch Error:', error));
         }
 
         function populateUserTable(data) {
             userTable.clear();
             data.forEach(user => {
                 userTable.row.add([
-                    `<div class="view-mode">${user.idno}</div><div class="inline-form"><input type="text" value="${user.idno}" data-field="idno"></div>`,
-                    `<div class="view-mode">${user.fullname}</div><div class="inline-form"><input type="text" value="${user.fullname}" data-field="fullname"></div>`,
-                    `<div class="view-mode">${user.username}</div><div class="inline-form"><input type="text" value="${user.username}" data-field="username"></div>`,
-                    `<div class="view-mode">${user.department}</div><div class="inline-form"><input type="text" value="${user.department}" data-field="department"></div>`,
-                    `<div class="view-mode">${user.user_type}</div><div class="inline-form"><input type="text" value="${user.user_type}" data-field="user_type"></div>`,
-                    `<div class="action-buttons" data-id="${user.objid}" data-type="user">
-                        <button class="btn btn-primary btn-sm btn-edit" onclick="toggleEdit(this)"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-success btn-sm btn-save" style="display:none;" onclick="saveInline(this)"><i class="fas fa-check"></i></button>
-                        <button class="btn btn-secondary btn-sm btn-cancel" style="display:none;" onclick="cancelEdit(this)"><i class="fas fa-times"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteRecord('user', ${user.objid})"><i class="fas fa-trash"></i></button>
-                    </div>`
+                    buildCellHTML('idno', user.idno, user.objid, 'text'),
+                    buildCellHTML('fullname', user.fullname, user.objid, 'text'),
+                    buildCellHTML('username', user.username, user.objid, 'text'),
+                    buildCellHTML('department', user.department, user.objid, 'text'),
+                    buildCellHTML('user_type', user.user_type, user.objid, 'text'),
+                    buildActionButtons(user.objid, 'user')
                 ]).draw(false);
             });
         }
@@ -312,17 +314,12 @@
             productTable.clear();
             data.forEach(prod => {
                 productTable.row.add([
-                    `<div class="view-mode">${prod.product_code}</div><div class="inline-form"><input type="text" value="${prod.product_code}" data-field="product_code"></div>`,
-                    `<div class="view-mode">${prod.product_name}</div><div class="inline-form"><input type="text" value="${prod.product_name}" data-field="product_name"></div>`,
-                    `<div class="view-mode">${prod.category}</div><div class="inline-form"><input type="text" value="${prod.category}" data-field="category"></div>`,
-                    `<div class="view-mode">${prod.price}</div><div class="inline-form"><input type="number" step="0.01" value="${prod.price}" data-field="price"></div>`,
-                    `<div class="view-mode">${prod.stock}</div><div class="inline-form"><input type="number" value="${prod.stock}" data-field="stock"></div>`,
-                    `<div class="action-buttons" data-id="${prod.objid}" data-type="product">
-                        <button class="btn btn-primary btn-sm btn-edit" onclick="toggleEdit(this)"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-success btn-sm btn-save" style="display:none;" onclick="saveInline(this)"><i class="fas fa-check"></i></button>
-                        <button class="btn btn-secondary btn-sm btn-cancel" style="display:none;" onclick="cancelEdit(this)"><i class="fas fa-times"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteRecord('product', ${prod.objid})"><i class="fas fa-trash"></i></button>
-                    </div>`
+                    buildCellHTML('product_code', prod.product_code, prod.objid, 'text'),
+                    buildCellHTML('product_name', prod.product_name, prod.objid, 'text'),
+                    buildCellHTML('category', prod.category, prod.objid, 'text'),
+                    buildCellHTML('price', prod.price, prod.objid, 'number'),
+                    buildCellHTML('stock', prod.stock, prod.objid, 'number'),
+                    buildActionButtons(prod.objid, 'product')
                 ]).draw(false);
             });
         }
@@ -331,18 +328,31 @@
             customerTable.clear();
             data.forEach(cust => {
                 customerTable.row.add([
-                    `<div class="view-mode">${cust.customer_code}</div><div class="inline-form"><input type="text" value="${cust.customer_code}" data-field="customer_code"></div>`,
-                    `<div class="view-mode">${cust.fullname}</div><div class="inline-form"><input type="text" value="${cust.fullname}" data-field="fullname"></div>`,
-                    `<div class="view-mode">${cust.email}</div><div class="inline-form"><input type="email" value="${cust.email}" data-field="email"></div>`,
-                    `<div class="view-mode">${cust.phone}</div><div class="inline-form"><input type="text" value="${cust.phone}" data-field="phone"></div>`,
-                    `<div class="action-buttons" data-id="${cust.objid}" data-type="customer">
-                        <button class="btn btn-primary btn-sm btn-edit" onclick="toggleEdit(this)"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-success btn-sm btn-save" style="display:none;" onclick="saveInline(this)"><i class="fas fa-check"></i></button>
-                        <button class="btn btn-secondary btn-sm btn-cancel" style="display:none;" onclick="cancelEdit(this)"><i class="fas fa-times"></i></button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteRecord('customer', ${cust.objid})"><i class="fas fa-trash"></i></button>
-                    </div>`
+                    buildCellHTML('customer_code', cust.customer_code, cust.objid, 'text'),
+                    buildCellHTML('fullname', cust.fullname, cust.objid, 'text'),
+                    buildCellHTML('email', cust.email, cust.objid, 'email'),
+                    buildCellHTML('phone', cust.phone, cust.objid, 'text'),
+                    buildActionButtons(cust.objid, 'customer')
                 ]).draw(false);
             });
+        }
+
+        // Helper to generate Cell HTML for Inline Editing
+        function buildCellHTML(field, value, id, type) {
+            return `<div class="view-mode">${value}</div>
+                    <div class="inline-form">
+                        <input type="${type}" value="${value}" data-field="${field}" data-id="${id}">
+                    </div>`;
+        }
+
+        // Helper to generate Action Buttons
+        function buildActionButtons(id, type) {
+            return `<div class="action-buttons" data-id="${id}" data-type="${type}">
+                        <button class="btn btn-primary btn-sm btn-edit" onclick="toggleEdit(this)" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-success btn-sm btn-save" style="display:none;" onclick="saveInline(this)" title="Save"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-secondary btn-sm btn-cancel" style="display:none;" onclick="cancelEdit(this)" title="Cancel"><i class="fas fa-times"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteRecord('${type}', '${id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>`;
         }
 
         // ==========================================
@@ -362,16 +372,12 @@
             $(btn).hide();
             row.find('.btn-save').hide();
             row.find('.btn-edit').show();
-            
-            // Reset values (simple reload for simplicity)
-            const type = $(btn).closest('.action-buttons').data('type');
-            loadData(type + 's'); // reload specific table
         }
 
         function saveInline(btn) {
             const actionBtns = $(btn).closest('.action-buttons');
             const id = actionBtns.data('id');
-            const type = actionBtns.data('type'); // user, product, customer
+            const type = actionBtns.data('type'); 
             const row = $(btn).closest('tr');
 
             // Gather data from inputs in this row
@@ -380,29 +386,13 @@
                 payload[$(this).data('field')] = $(this).val();
             });
 
-            // Determine API action
-            let endpoint = type; // api/users, api/products, etc.
-            // Note: Your API currently uses POST for creation. You might need an 'update' endpoint logic
-            // or send a specific JSON body. Assuming we send the whole object and the controller handles it.
-            // Since your routes switch on method, and POST calls createProduct, we need to verify if your 
-            // API handles updates via POST or if we need to simulate an update logic.
-            // For this demonstration, we will assume the backend has an 'edit_' logic or you will adjust the API.
-            // Ideally, the API should handle PUT for updates, but for simplicity, let's assume we need a different way
-            // OR we simply use POST with an action flag if your API supports it.
+            // API Call for Update
+            // NOTE: This sends a POST request. Your API must handle this action.
+            // Ideally, APIs use PUT for updates. If your API strictly checks REQUEST_METHOD,
+            // you might need to adjust routes.php to handle 'edit' actions or change method to 'PUT'.
             
-            // **IMPORTANT**: Your current API setup in `routes.php` maps POST /products to `createProduct`.
-            // It does not have a route for UPDATE. 
-            // To make this work without changing your previous prompt's API structure, 
-            // we would need an 'update' route. 
-            
-            // I will proceed by sending a POST request, but you must add an 'update' case 
-            // in your routes.php for this to function fully.
-            
-            // For now, I will log a warning and use POST.
-            console.warn("Update logic requires API implementation for PUT/POST update actions.");
-
-            fetch(`${API_URL}/${type}`, {
-                method: 'POST', // Ideally should be PUT or handled by logic
+            fetch(`${API_URL}/${type}/${id}`, {
+                method: 'POST', // Change to 'PUT' if your API supports it
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
@@ -410,10 +400,14 @@
             .then(data => {
                 if(data.status === 'success') {
                     Swal.fire('Updated!', data.message, 'success');
-                    loadData(type + 's');
+                    loadData(type + 's'); // Reload table
                 } else {
-                    Swal.fire('Error', data.message, 'error');
+                    Swal.fire('Error', data.message || 'Update failed', 'error');
                 }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Error', 'Server communication error', 'error');
             });
         }
 
@@ -431,21 +425,24 @@
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Note: Your current API routes.php does not have a DELETE handler.
-                    // You need to add a case for REQUEST_METHOD === 'DELETE' in routes.php
-                    // and corresponding methods in controllers.
-                    
-                    // For demonstration, this code assumes the endpoint exists.
-                    fetch(`${API_URL}/${type}/${id}`, { method: 'DELETE' })
-                        .then(res => res.json())
-                        .then(data => {
-                            if(data.status === 'success') {
-                                Swal.fire('Deleted!', data.message, 'success');
-                                loadData(type + 's');
-                            } else {
-                                Swal.fire('Error', data.message, 'error');
-                            }
-                        });
+                    // API Call for Delete
+                    // NOTE: Ensure routes.php handles DELETE method or adjust logic accordingly
+                    fetch(`${API_URL}/${type}/${id}`, { 
+                        method: 'DELETE' 
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            Swal.fire('Deleted!', data.message, 'success');
+                            loadData(type + 's');
+                        } else {
+                            Swal.fire('Error', data.message || 'Delete failed', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('Error', 'Server communication error', 'error');
+                    });
                 }
             });
         }
@@ -502,7 +499,7 @@
 
             $('#formModalTitle').text(title);
             $('#formModalBody').html(fields);
-            $('#formModal').data('type', type); // Store type in modal
+            $('#formModal').data('type', type); 
             $('#formModal').modal('show');
         }
 
@@ -515,10 +512,9 @@
                 payload[field.name] = field.value;
             });
 
-            // Handle User Registration specific logic (password repassword)
-            // Since API expects specific fields, ensure they match
+            // Specific logic for User Registration if API needs repassword
             if(type === 'user') {
-                payload.repassword = payload.password; // Simplified for API
+                payload.repassword = payload.password; 
             }
 
             $('#myOverlay').addClass('active');
@@ -536,12 +532,13 @@
                     Swal.fire('Success!', data.message, 'success');
                     loadData(type + 's');
                 } else {
-                    Swal.fire('Error!', data.message, 'error');
+                    Swal.fire('Error!', data.message || 'Unknown error', 'error');
                 }
             })
             .catch(err => {
                 $('#myOverlay').removeClass('active');
-                Swal.fire('Error!', 'Connection error', 'error');
+                console.error(err);
+                Swal.fire('Error!', 'Could not connect to server.', 'error');
             });
         }
 
@@ -556,7 +553,7 @@
                 confirmButtonText: 'Yes, logout!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = 'logout.php';
+                    window.location.href = 'logout.php'; 
                 }
             });
         } 

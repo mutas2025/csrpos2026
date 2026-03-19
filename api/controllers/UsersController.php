@@ -87,8 +87,8 @@ class UsersController {
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
-}
-public function getUsers() {
+
+    public function getUsers() {
         try {
             $stmt = $this->con->prepare("SELECT idno, fullname, username, email, contactno, department, user_type FROM tbl_users");
             $stmt->execute();
@@ -98,3 +98,4 @@ public function getUsers() {
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
     }
+}
