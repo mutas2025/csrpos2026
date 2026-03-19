@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 13, 2026 at 12:03 PM
+-- Generation Time: Mar 19, 2026 at 01:29 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -65,7 +65,7 @@ CREATE TABLE `tbl_products` (
 --
 
 INSERT INTO `tbl_products` (`objid`, `product_code`, `product_name`, `category`, `price`, `stock`, `date_created`) VALUES
-(1, 'F1425', 'SAFEGUARD 15G', 'SOAP', 20.00, 30, '2026-03-13 10:39:23');
+(4, 'F1254', 'SABON', 'Panglaba', 5.00, 10, '2026-03-19 12:23:04');
 
 -- --------------------------------------------------------
 
@@ -81,8 +81,8 @@ CREATE TABLE `tbl_users` (
   `user_type` enum('admin','manager','cashier','staff') NOT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `contact_number` varchar(20) DEFAULT NULL,
-  `password_hash` varchar(255) NOT NULL,
+  `contactno` varchar(20) DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
   `terms_agreed` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -92,8 +92,9 @@ CREATE TABLE `tbl_users` (
 -- Dumping data for table `tbl_users`
 --
 
-INSERT INTO `tbl_users` (`objid`, `idno`, `fullname`, `department`, `user_type`, `username`, `email`, `contact_number`, `password_hash`, `terms_agreed`, `created_at`, `updated_at`) VALUES
-(1, '1997022201', 'Jomar Mutas', 'Sales', '', 'joms', 'jom@gmail.com', '09101882719', '$2y$10$DTopEk350bbaiPFKFpEPw.QSE3eE48qKFCu6AprSp./UidX7QOrw.', 0, '2026-02-27 01:00:57', '2026-03-13 10:02:04');
+INSERT INTO `tbl_users` (`objid`, `idno`, `fullname`, `department`, `user_type`, `username`, `email`, `contactno`, `password`, `terms_agreed`, `created_at`, `updated_at`) VALUES
+(2, '1997022201', 'Jomar Mutas', 'IT', 'admin', 'jomar', 'jomarmutas@csr-scc.edu.ph', '09101882719', '$2y$10$ZyQgO6M2xVFUBTCUs94Xdu.sRLqu.XdejaDIqEH9gJBffOYCIex2K', 0, '2026-03-19 12:05:04', '2026-03-19 12:05:04'),
+(3, '2004021687', 'Earl Esguerra', 'CBAM', 'staff', 'udoy', 'earl@csr-scc.edu.ph', '09101882718', '$2y$10$Cpl6dj.RIN31afGBtFER8uwlIzPbW1DoEEfEiqhsWXlQ/760meLm6', 0, '2026-03-19 12:09:19', '2026-03-19 12:09:19');
 
 --
 -- Indexes for dumped tables
@@ -136,13 +137,13 @@ ALTER TABLE `tbl_customers`
 -- AUTO_INCREMENT for table `tbl_products`
 --
 ALTER TABLE `tbl_products`
-  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `tbl_users`
 --
 ALTER TABLE `tbl_users`
-  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
