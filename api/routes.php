@@ -3,8 +3,6 @@
 // routes.php
 // ============================================================================
 // Unified RESTful API entry point for all application endpoints.
-// This file acts as a single router that directs incoming API requests to
-// the appropriate controller based on the resource path being requested.
 // ============================================================================
 
 // ============================================================================
@@ -17,7 +15,17 @@ error_reporting(E_ALL);
 // ============================================================================
 // SECTION 2: HTTP HEADERS
 // ============================================================================
-header('Content-Type: application/json');
+// Allow access from any origin (adjust to specific domain in production)
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+// Handle OPTIONS preflight request for CORS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // ============================================================================
 // SECTION 3: LOAD DEPENDENT CLASSES
@@ -32,29 +40,43 @@ require_once __DIR__ . '/controllers/CustomerController.php';
 // ============================================================================
  $method = $_SERVER['REQUEST_METHOD'];
 
-// For GET/POST, input is straightforward. For PUT/DELETE, we read php://input.
- $input = json_decode(file_get_contents('php://input'), true) ?? [];
+// Parse input. Prioritize JSON body for PUT/POST, fallback to $_REQUEST
+ $input = [];
+if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
+    $rawInput = file_get_contents('php://input');
+    $decoded = json_decode($rawInput, true);
+    if (json_last_error() === JSON_ERROR_NONE) {
+        $input = $decoded;
+    } else {
+        // Fallback for standard form-data if JSON decode fails
+        $input = $_POST; 
+    }
+} else {
+    $input = $_REQUEST;
+}
 
 // ============================================================================
-// SECTION 5: EXTRACT THE RESOURCE PATH
+// SECTION 5: EXTRACT THE RESOURCE PATH (DYNAMIC)
 // ============================================================================
+
+// Get the directory name of this script relative to the web root
+// e.g., if url is localhost/project/api/routes.php, base is /project/api
+ $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
  $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
- $base = '/csr1/csr_pos_oberes/api';
- $pathInfo = substr($uri, strlen($base));
+
+// Remove the base path from the URI to get the endpoint
+ $pathInfo = substr($uri, strlen($scriptName));
  $pathInfo = trim($pathInfo, '/');
+
+// Remove 'routes.php' if it appears in the path (handles explicit file calls)
+ $pathInfo = str_replace('routes.php', '', $pathInfo);
+ $pathInfo = trim($pathInfo, '/');
+
  $segments = explode('/', $pathInfo);
 
 // Determine resource (e.g., 'products') and optional ID (e.g. '5')
- $resource = '';
- $id = null;
-
-if (!empty($segments[0]) && strpos($segments[0], '.php') === false) {
-    $resource = $segments[0];
-    if (isset($segments[1])) { $id = $segments[1]; }
-} elseif (!empty($segments[1])) {
-    $resource = $segments[1];
-    if (isset($segments[2])) { $id = $segments[2]; }
-}
+ $resource = $segments[0] ?? '';
+ $id = $segments[1] ?? null;
 
 // ============================================================================
 // SECTION 6: DISPATCH TO THE CORRECT CONTROLLER
@@ -63,6 +85,13 @@ if (!empty($segments[0]) && strpos($segments[0], '.php') === false) {
  $response = [];
 
 try {
+    // Simple validation to ensure a resource was requested
+    if (empty($resource)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'No API endpoint specified.']);
+        exit;
+    }
+
     switch ($resource) {
         
         // ====================================================================
@@ -92,7 +121,7 @@ try {
             break;
 
         // ====================================================================
-        // CASE: Users (GET List, POST Create, PUT Update, DELETE)
+        // CASE: Users
         // ====================================================================
         case 'users':
             $controller = new UsersController();
@@ -101,12 +130,10 @@ try {
                     $response = $controller->getUsers();
                     break;
                 case 'POST':
-                    // For registration via API, ensure repassword is set
                     if (!isset($input['repassword'])) { $input['repassword'] = $input['password'] ?? ''; }
                     $response = $controller->register($input);
                     break;
                 case 'PUT':
-                    // Update user. Assume $input contains objid, or we use $id from URL
                     if ($id) { $input['objid'] = $id; }
                     $response = $controller->updateUser($input);
                     break;
@@ -125,7 +152,7 @@ try {
             break;
 
         // ====================================================================
-        // CASE: Products (GET List, POST Create, PUT Update, DELETE)
+        // CASE: Products
         // ====================================================================
         case 'products':
             $controller = new ProductController();
@@ -155,7 +182,7 @@ try {
             break;
 
         // ====================================================================
-        // CASE: Customers (GET List, POST Create, PUT Update, DELETE)
+        // CASE: Customers
         // ====================================================================
         case 'customers':
             $controller = new CustomerController();
@@ -191,11 +218,13 @@ try {
             http_response_code(404);
             $response = [
                 'status' => 'error',
-                'message' => 'Resource not found. Available: /register, /login, /users, /products, /customers.'
+                'message' => "Resource '{$resource}' not found.",
+                'hint' => 'Available endpoints: /register, /login, /users, /products, /customers'
             ];
             break;
     }
 } catch (Exception $e) {
+    // Log error to file if possible, don't echo details in production
     http_response_code(500);
     $response = ['status' => 'error', 'message' => 'Server error: ' . $e->getMessage()];
 }
