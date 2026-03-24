@@ -30,9 +30,9 @@
         .dropdown-menu { min-width: 8rem; }
         
         /* Status Badges */
-        .badge-in-stock { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; }
-        .badge-low-stock { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; }
-        .badge-out-of-stock { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; }
+        .badge-in-stock { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.85rem; }
+        .badge-low-stock { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; font-size: 0.85rem; }
+        .badge-out-of-stock { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.85rem; }
         
         /* View Modal Styles */
         .view-table td {
@@ -129,7 +129,7 @@
                             <div class="card-body">
                                 <table id="products-table" class="table table-bordered table-striped table-hover">
                                     <thead>
-                                        <tr>
+                                        32
                                             <th>Code</th>
                                             <th>Product Name</th>
                                             <th>Category</th>
@@ -208,7 +208,11 @@
                                     <input type="number" name="stock" id="prod_stock" class="form-control" required min="0">
                                 </div>
                             </div>
-                
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea name="description" id="prod_description" class="form-control" rows="3" placeholder="Enter product description (optional)..."></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -487,9 +491,7 @@ $(document).ready(function() {
             $('#prod_category').val(productData.category);
             $('#prod_price').val(productData.price);
             $('#prod_stock').val(productData.stock);
-            if(productData.description) {
-                $('#prod_description').val(productData.description);
-            }
+            $('#prod_description').val(productData.description || '');
             
             // Show the modal
             $('#productModal').modal({

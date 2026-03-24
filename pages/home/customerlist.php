@@ -121,7 +121,7 @@
                             <div class="card-body">
                                 <table id="customers-table" class="table table-bordered table-striped table-hover">
                                     <thead>
-                                        32
+                               
                                             <th>Code</th>
                                             <th>Full Name</th>
                                             <th>Email</th>
