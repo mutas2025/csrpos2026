@@ -197,7 +197,9 @@ try {
                     $response = $controller->createProduct($input);
                     break;
                 case 'PUT':
-                    if ($prodId) { $input['objid'] = $prodId; }
+                    if ($prodId) { 
+                        $input['objid'] = $prodId; 
+                    }
                     $response = $controller->updateProduct($input);
                     break;
                 case 'DELETE':
@@ -229,7 +231,9 @@ try {
                     $response = $controller->createCustomer($input);
                     break;
                 case 'PUT':
-                    if ($custId) { $input['objid'] = $custId; }
+                    if ($custId) { 
+                        $input['objid'] = $custId; 
+                    }
                     $response = $controller->updateCustomer($input);
                     break;
                 case 'DELETE':

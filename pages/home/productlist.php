@@ -130,7 +130,7 @@
                             <div class="card-body">
                                 <table id="products-table" class="table table-bordered table-striped table-hover">
                                     <thead>
-                                        32
+                                        <tr>
                                             <th>Code</th>
                                             <th>Product Name</th>
                                             <th>Category</th>
@@ -209,12 +209,6 @@
                                     <input type="number" name="stock" id="prod_stock" class="form-control" required min="0">
                                 </div>
                             </div>
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea name="description" id="prod_description" class="form-control" rows="3" placeholder="Enter product description (optional)..."></textarea>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -272,16 +266,8 @@
                                     <td id="v_stock_status">-</td>
                                 </tr>
                                 <tr>
-                                    <th>Description:</th>
-                                    <td id="v_description">-</td>
-                                </tr>
-                                <tr>
                                     <th>Created At:</th>
                                     <td id="v_created_at">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Last Updated:</th>
-                                    <td id="v_updated_at">-</td>
                                 </tr>
                             </table>
                         </div>
@@ -463,9 +449,7 @@ $(document).ready(function() {
             $('#v_price').html('₱' + (parseFloat(productData.price) || 0).toFixed(2));
             $('#v_stock').text(productData.stock || 0);
             $('#v_stock_status').html(getStockStatusBadge(productData.stock || 0));
-            $('#v_description').text(productData.description || 'No description provided.');
-            $('#v_created_at').text(productData.created_at || 'N/A');
-            $('#v_updated_at').text(productData.updated_at || 'N/A');
+            $('#v_created_at').text(productData.date_created || productData.created_at || 'N/A');
             
             // Show the modal
             $('#viewModal').modal('show');
@@ -492,7 +476,6 @@ $(document).ready(function() {
             $('#prod_category').val(productData.category);
             $('#prod_price').val(productData.price);
             $('#prod_stock').val(productData.stock);
-            $('#prod_description').val(productData.description || '');
             
             // Show the modal
             $('#productModal').modal({
@@ -594,8 +577,7 @@ $(document).ready(function() {
             product_name: product_name,
             category: category,
             price: parseFloat(price),
-            stock: parseInt(stock),
-            description: $('#prod_description').val().trim()
+            stock: parseInt(stock)
         };
         
         var isUpdate = $('#prod_objid').val() !== '';

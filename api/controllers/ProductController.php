@@ -62,6 +62,14 @@ class ProductController {
             $stmt = $this->con->prepare("SELECT objid, product_code, product_name, category, price, stock, date_created FROM tbl_products");
             $stmt->execute();
             $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Format the response to include date fields for consistency
+            foreach ($products as &$product) {
+                $product['created_at'] = $product['date_created'];
+                $product['updated_at'] = $product['date_created']; // If no updated_at field, use date_created
+                $product['description'] = ''; // Add empty description if not in database
+            }
+            
             return ['status' => 'success', 'data' => $products];
         } catch (PDOException $e) {
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
@@ -88,6 +96,18 @@ class ProductController {
             return ['status' => 'error', 'message' => 'All fields are required.'];
         }
 
+        // Validate numeric values
+        if (!is_numeric($price) || !is_numeric($stock)) {
+            return ['status' => 'error', 'message' => 'Price and Stock must be numeric values.'];
+        }
+
+        // Check for duplicate product code (excluding current product)
+        $stmt = $this->con->prepare("SELECT COUNT(*) FROM tbl_products WHERE product_code = ? AND objid != ?");
+        $stmt->execute([$product_code, $objid]);
+        if ($stmt->fetchColumn() > 0) {
+            return ['status' => 'error', 'message' => 'Product code already exists.'];
+        }
+
         try {
             $sql = "UPDATE tbl_products SET 
                         product_code = ?, 
@@ -100,7 +120,11 @@ class ProductController {
             $stmt = $this->con->prepare($sql);
             $stmt->execute([$product_code, $product_name, $category, $price, $stock, $objid]);
 
-            return ['status' => 'success', 'message' => 'Product updated successfully.'];
+            if ($stmt->rowCount() > 0) {
+                return ['status' => 'success', 'message' => 'Product updated successfully.'];
+            } else {
+                return ['status' => 'error', 'message' => 'No changes made or product not found.'];
+            }
         } catch (PDOException $e) {
             return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
