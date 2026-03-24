@@ -10,7 +10,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>User Management</title>
-
+    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="../../dist/css/font.css">
     <!-- DataTables & Bootstrap 4 -->

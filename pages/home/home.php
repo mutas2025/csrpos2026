@@ -12,7 +12,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard | Management System</title>
 
+    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
+
     <!-- Google Font: Source Sans Pro -->
+    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <link rel="stylesheet" href="../../dist/css/font.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">

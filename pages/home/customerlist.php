@@ -12,6 +12,7 @@
     <title>Customer Management</title>
 
     <!-- Google Font: Source Sans Pro -->
+    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <link rel="stylesheet" href="../../dist/css/font.css">
     <!-- DataTables & Bootstrap 4 -->
     <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
