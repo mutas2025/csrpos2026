@@ -1,284 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSRPOS - New Member Registration</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>San Carlos City | Franchising</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="dist/css/font.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
+    <!-- icheck bootstrap -->
+    <link rel="stylesheet" href="plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="dist/css/adminlte.min.css">
+    <link rel="icon" type="image/png" sizes="40x16" href="dist/img/splogo.png">
     <style>
-        :root {
-            --primary-color: #0056b3; /* Professional Blue */
-            --primary-hover: #004494;
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --text-light: #666666;
-            --border-color: #dddddd;
-            --error-color: #e74c3c;
-            --success-color: #2ecc71;
-            --input-radius: 6px;
-            --btn-radius: 6px;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
-            background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: "Asap", sans-serif;
         }
 
-        /* Container for the Registration Card */
-        .registration-container {
-            background-color: var(--card-bg);
-            width: 100%;
-            max-width: 600px;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Header Section */
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: var(--primary-color);
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-        }
-
-        .header p {
-            color: var(--text-light);
-            font-size: 14px;
-        }
-
-        /* Form Grid Layout */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        /* Responsive adjustment for smaller screens */
-        @media (max-width: 500px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            .registration-container {
-                padding: 25px;
-            }
-        }
-
-        /* Form Groups */
-        .form-group {
-            margin-bottom: 5px; /* Grid handles spacing mostly */
-            position: relative;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        /* Input Styling */
-        input[type="text"],
-        input[type="email"],
-        input[type="password"],
-        input[type="tel"],
-        select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--input-radius);
-            font-size: 14px;
-            transition: all 0.3s ease;
-            outline: none;
-            background-color: #fafafa;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary-color);
-            background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1);
-        }
-
-        /* Validation Styling */
-        input.invalid, select.invalid {
-            border-color: var(--error-color);
-            background-color: #fff6f6;
-        }
-
-        .error-message {
-            color: var(--error-color);
-            font-size: 11px;
-            margin-top: 4px;
-            display: none;
-        }
-
-        input.invalid + .error-message, select.invalid + .error-message {
-            display: block;
-        }
-
-        /* Password Toggle Icon */
-        .password-wrapper {
-            position: relative;
-        }
-
-        .toggle-password {
+        .login {
+            overflow: hidden;
+            background: white;
+            padding: 40px 30px 30px 30px;
+            border-radius: 10px;
             position: absolute;
-            right: 12px;
             top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #999;
-            background: none;
-            border: none;
-            padding: 0;
+            left: 50%;
+            width: 400px;
+            -webkit-transform: translate(-50%, -50%);
+            -moz-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            -o-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+            -webkit-transition: -webkit-transform 300ms, box-shadow 300ms;
+            -moz-transition: -moz-transform 300ms, box-shadow 300ms;
+            transition: transform 300ms, box-shadow 300ms;
+            box-shadow: 5px 10px 10px rgba(2, 128, 144, 0.2);
         }
 
-        .toggle-password:hover {
-            color: var(--primary-color);
+        .login::before,
+        .login::after {
+            content: "";
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-top-left-radius: 40%;
+            border-top-right-radius: 45%;
+            border-bottom-left-radius: 35%;
+            border-bottom-right-radius: 40%;
+            z-index: -1;
         }
 
-        /* Terms Checkbox */
-        .terms-group {
-            grid-column: 1 / -1;
-            display: flex;
-            align-items: center;
-            margin-top: 10px;
+        .login::before {
+            left: 15%;
+            bottom: -102%;
+            background-color: rgba(69, 105, 144, 0.15);
+            -webkit-animation: wawes 6s infinite linear;
+            -moz-animation: wawes 6s infinite linear;
+            animation: wawes 6s infinite linear;
         }
 
-        .terms-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-right: 10px;
-            cursor: pointer;
-            accent-color: var(--primary-color);
+        .login::after {
+            left: 22%;
+            bottom: -112%;
+            background-color: rgba(2, 128, 144, 0.2);
+            -webkit-animation: wawes 7s infinite;
+            -moz-animation: wawes 7s infinite;
+            animation: wawes 7s infinite;
         }
 
-        .terms-group label {
-            font-weight: 400;
-            margin-bottom: 0;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-
-        .terms-group a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        /* Buttons */
-        .btn-register {
-            grid-column: 1 / -1;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 14px;
-            border: none;
-            border-radius: var(--btn-radius);
+        .login>input {
+            font-family: "Asap", sans-serif;
+            display: block;
+            border-radius: 5px;
             font-size: 16px;
-            font-weight: 600;
+            background: white;
+            width: 100%;
+            border: 0;
+            padding: 10px 10px;
+            margin: 15px -10px;
+        }
+
+        .login>button {
+            font-family: "Asap", sans-serif;
             cursor: pointer;
-            margin-top: 20px;
-            transition: background-color 0.3s ease, transform 0.1s ease;
+            color: #fff;
+            font-size: 16px;
+            text-transform: uppercase;
+            width: 100%;
+            border: 0;
+            padding: 10px 0;
+            margin-top: 10px;
+            border-radius: 5px;
+            background-color: #0056b3;
+            -webkit-transition: background-color 300ms;
+            -moz-transition: background-color 300ms;
+            transition: background-color 300ms;
         }
 
-        .btn-register:hover {
-            background-color: var(--primary-hover);
+        .login>button:hover {
+            background-color: #004494;
         }
 
-        .btn-register:active {
-            transform: scale(0.98);
-        }
-
-        .btn-register:disabled {
+        .login>button:disabled {
             background-color: #a0c4e8;
             cursor: not-allowed;
-            transform: none;
         }
 
-        /* Footer Link */
-        .login-link {
-            grid-column: 1 / -1;
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            color: var(--text-light);
+        @-webkit-keyframes wawes {
+            from {
+                -webkit-transform: rotate(0);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+            }
         }
 
-        .login-link a {
-            color: var(--primary-color);
+        @-moz-keyframes wawes {
+            from {
+                -moz-transform: rotate(0);
+            }
+            to {
+                -moz-transform: rotate(360deg);
+            }
+        }
+
+        @keyframes wawes {
+            from {
+                -webkit-transform: rotate(0);
+                -moz-transform: rotate(0);
+                -ms-transform: rotate(0);
+                -o-transform: rotate(0);
+                transform: rotate(0);
+            }
+            to {
+                -webkit-transform: rotate(360deg);
+                -moz-transform: rotate(360deg);
+                -ms-transform: rotate(360deg);
+                -o-transform: rotate(360deg);
+                transform: rotate(360deg);
+            }
+        }
+
+        a {
             text-decoration: none;
-            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            font-size: 12px;
         }
 
-        .login-link a:hover {
-            text-decoration: underline;
+        center {
+            font-size: 25px;
+            z-index: 99 !important;
+            display: block;
+            color: black;
         }
-
-        /* Toast Notification */
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .toast {
-            display: flex;
-            align-items: center;
-            min-width: 250px;
-            background: white;
-            padding: 16px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            margin-bottom: 10px;
-            border-left: 5px solid;
-            opacity: 0;
-            transform: translateX(50px);
-            transition: all 0.3s ease;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .toast.success { border-left-color: var(--success-color); }
-        .toast.error { border-left-color: var(--error-color); }
-
-        .toast-icon {
-            margin-right: 12px;
-            font-size: 20px;
-        }
-        
-        .toast.success .toast-icon { color: var(--success-color); }
-        .toast.error .toast-icon { color: var(--error-color); }
 
         .spinner {
             display: inline-block;
@@ -290,268 +170,134 @@
             animation: spin 1s ease-in-out infinite;
             margin-right: 8px;
             vertical-align: middle;
-            display: none;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
     </style>
 </head>
-<body>
 
-    <div id="toast-container"></div>
+<body class="hold-transition login-page bg-secondary">
 
-    <div class="registration-container">
-        <div class="header">
-            <h1>CSRPOS</h1>
-            <p>Create a new membership account</p>
-        </div>
-
-        <form id="registerForm" method="POST" action="" novalidate>
-            <div class="form-grid">
-                
-                <!-- ID Number -->
-                <div class="form-group">
-                    <label for="idNumber">ID Number</label>
-                    <input type="text" id="idNumber" name="idNumber" placeholder="Enter ID Number" required value="<?php echo isset($_POST['idNumber']) ? htmlspecialchars($_POST['idNumber']) : ''; ?>">
-                    <span class="error-message">ID Number is required</span>
-                </div>
-
-                <!-- Full Name -->
-                <div class="form-group">
-                    <label for="fullName">Full Name</label>
-                    <input type="text" id="fullName" name="fullName" placeholder="John Doe" required value="<?php echo isset($_POST['fullName']) ? htmlspecialchars($_POST['fullName']) : ''; ?>">
-                    <span class="error-message">Full Name is required</span>
-                </div>
-
-                <!-- Department/Office -->
-                <div class="form-group">
-                    <label for="department">Department/Office</label>
-                    <input type="text" id="department" name="department" placeholder="e.g. Sales, IT" required value="<?php echo isset($_POST['department']) ? htmlspecialchars($_POST['department']) : ''; ?>">
-                    <span class="error-message">Department is required</span>
-                </div>
-
-                <!-- Select User Type -->
-                <div class="form-group">
-                    <label for="userType">Select User Type</label>
-                    <select id="userType" name="userType" required>
-                        <option value="" disabled>Choose User Type</option>
-                        <option value="Admin" <?php echo (isset($_POST['userType']) && $_POST['userType'] == 'Admin') ? 'selected' : ''; ?>>Administrator</option>
-                        <option value="Manager" <?php echo (isset($_POST['userType']) && $_POST['userType'] == 'Manager') ? 'selected' : ''; ?>>Manager</option>
-                        <option value="Cashier" <?php echo (isset($_POST['userType']) && $_POST['userType'] == 'Cashier') ? 'selected' : ''; ?>>Cashier</option>
-                        <option value="Staff" <?php echo (isset($_POST['userType']) && $_POST['userType'] == 'Staff') ? 'selected' : ''; ?>>Staff</option>
-                    </select>
-                    <span class="error-message">Please select a user type</span>
-                </div>
-
-                <!-- Username -->
-                <div class="form-group full-width">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Choose a username" required value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
-                    <span class="error-message">Username is required</span>
-                </div>
-
-                <!-- Email -->
-                <div class="form-group full-width">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="example@company.com" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
-                    <span class="error-message">Please enter a valid email address</span>
-                </div>
-
-                <!-- Contact Number -->
-                <div class="form-group full-width">
-                    <label for="contactNumber">Contact Number</label>
-                    <input type="tel" id="contactNumber" name="contactNumber" placeholder="e.g. +1 234 567 8900" required value="<?php echo isset($_POST['contactNumber']) ? htmlspecialchars($_POST['contactNumber']) : ''; ?>">
-                    <span class="error-message">Contact number is required</span>
-                </div>
-
-                <!-- Password -->
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="password" name="password" placeholder="Create password" required>
-                        <button type="button" class="toggle-password" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
-                            <!-- Eye Icon SVG -->
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </button>
-                    </div>
-                    <span class="error-message">Password is required</span>
-                </div>
-
-                <!-- Retype Password -->
-                <div class="form-group">
-                    <label for="retypePassword">Retype Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="retypePassword" name="retypePassword" placeholder="Confirm password" required>
-                        <button type="button" class="toggle-password" onclick="togglePassword('retypePassword', this)" aria-label="Toggle password visibility">
-                            <!-- Eye Icon SVG -->
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        </button>
-                    </div>
-                    <span class="error-message">Passwords do not match</span>
-                </div>
-
-                <!-- Terms -->
-                <div class="terms-group">
-                    <input type="checkbox" id="terms" name="terms" required>
-                    <label for="terms">I agree to the <a href="#">terms</a> and conditions</label>
-                </div>
-                <!-- Hidden error for checkbox logic handled in JS -->
-                <div id="terms-error" class="error-message" style="margin-top: 5px; display: none;">You must agree to the terms.</div>
-
-                <!-- Register Button -->
-                <button type="submit" class="btn-register" id="submitBtn">
-                    <span class="spinner"></span>
-                    <span class="btn-text">Register</span>
-                </button>
-
-                <!-- Login Link -->
-                <div class="login-link">
-                    I already have a membership <a href="index.php">Login</a>
-                </div>
+    <div class="login-box bg-secondary card">
+        <form id="loginForm" class="login">
+            <div class="text-center">
+                <img class="profile-user-img img-fluid img-circle" src="dist/img/splogo.png" alt="User profile picture">
             </div>
+            <center>CSR POS Login</center>
+            <input type="text" id="username" name="username" placeholder="Username or Email" required>
+            <input type="password" id="password" name="password" placeholder="Password" required>
+            <button type="submit" id="submit_login">
+                <span class="spinner" style="display: none;"></span>
+                <span class="btn-text">Login</span>
+            </button>
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="register.php" style="color: #0056b3; position: static;">Don't have an account? Register here</a>
+            </div>
+            <img class="profile-user-img img-fluid border-0" style="mix-blend-mode: multiply; width: 67px; position: absolute; right: 39px; bottom: 21px;" src="dist/img/itcsologo.png" alt="User profile picture">
         </form>
     </div>
 
+    <!-- jQuery -->
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <!-- Bootstrap 4 -->
+    <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="dist/js/adminlte.min.js"></script>
+    <script src="plugins/fontawesomekit/a757e6f388.js"></script>
+    <script src="plugins/sweetalert2/sweetalert2@11.js"></script>
+    
     <script>
-        // Toggle Password Visibility
-        function togglePassword(inputId, btn) {
-            const input = document.getElementById(inputId);
-            const icon = btn.querySelector('svg');
-            
-            if (input.type === "password") {
-                input.type = "text";
-                // Slash eye icon
-                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-            } else {
-                input.type = "password";
-                // Normal eye icon
-                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
             }
-        }
-
-        // Toast Notification System
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            const iconSymbol = type === 'success' ? '✔' : '✖';
-            
-            toast.innerHTML = `
-                <div class="toast-icon">${iconSymbol}</div>
-                <div class="toast-message">${message}</div>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Trigger animation
-            requestAnimationFrame(() => {
-                toast.classList.add('show');
-            });
-            
-            // Remove after 3 seconds (Success) or 5 seconds (Error)
-            const timeout = type === 'success' ? 3000 : 5000;
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, timeout);
-        }
-
-        // Form Validation & Submission
-        const form = document.getElementById('registerForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const spinner = submitBtn.querySelector('.spinner');
-        const btnText = submitBtn.querySelector('.btn-text');
-
-        // PHP Driven Notifications
-        <?php if ($success_message): ?>
-            showToast('<?php echo $success_message; ?>', 'success');
-            // Optional: Redirect after success
-            setTimeout(() => { window.location.href = 'index.php'; }, 2000);
-        <?php endif; ?>
-
-        <?php if ($error_message): ?>
-            showToast('<?php echo $error_message; ?>', 'error');
-        <?php endif; ?>
-
-
-        form.addEventListener('submit', function(e) {
-            // We perform client-side validation before allowing the form to submit to PHP
-            let isValid = true;
-            const inputs = form.querySelectorAll('input[required], select[required]');
-            
-            // Reset previous errors
-            inputs.forEach(input => input.classList.remove('invalid'));
-            document.getElementById('terms-error').style.display = 'none';
-
-            // 1. Check Required Fields & Email Format
-            inputs.forEach(input => {
-                if (!input.value.trim()) {
-                    input.classList.add('invalid');
-                    isValid = false;
-                } else if (input.type === 'email' && !validateEmail(input.value)) {
-                    input.classList.add('invalid');
-                    isValid = false;
-                }
-            });
-
-            // 2. Check Password Match
-            const pass = document.getElementById('password');
-            const retype = document.getElementById('retypePassword');
-            if (pass.value !== retype.value) {
-                retype.classList.add('invalid');
-                isValid = false;
-            }
-
-            // 3. Check Terms Checkbox
-            const terms = document.getElementById('terms');
-            if (!terms.checked) {
-                document.getElementById('terms-error').style.display = 'block';
-                isValid = false;
-            }
-
-            if (!isValid) {
-                e.preventDefault(); // Stop submission if client-side validation fails
-                showToast('Please correct the errors in the form.', 'error');
-                return;
-            }
-
-            // If valid, show loading state and allow PHP to handle the request
-            setLoading(true);
         });
 
-        // Helper: Email Regex
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(String(email).toLowerCase());
-        }
-
-        // Helper: Loading State
-        function setLoading(isLoading) {
-            if (isLoading) {
-                submitBtn.disabled = true;
-                spinner.style.display = 'inline-block';
-                btnText.textContent = 'Registering...';
-            } else {
-                submitBtn.disabled = false;
-                spinner.style.display = 'none';
-                btnText.textContent = 'Register';
+        $('#loginForm').submit(function(e) {
+            e.preventDefault();
+            
+            const username = $('#username').val().trim();
+            const password = $('#password').val();
+            
+            // Validate inputs
+            if (!username || !password) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Please enter username/email and password!'
+                });
+                return;
             }
-        }
-
-        // Remove invalid class on input
-        document.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('input', function() {
-                if (this.value.trim()) {
-                    this.classList.remove('invalid');
+            
+            // Show loading state
+            const submitBtn = $('#submit_login');
+            const spinner = submitBtn.find('.spinner');
+            const btnText = submitBtn.find('.btn-text');
+            
+            submitBtn.prop('disabled', true);
+            spinner.show();
+            btnText.text('Logging in...');
+            
+            $.ajax({
+                url: 'api/login.php',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ username, password }),
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        Toast.fire({
+                            icon: 'success',
+                            title: response.message || 'Login successful!',
+                            timer: 2000
+                        });
+                        setTimeout(function() {
+                            window.location.href = 'pages/home/index.php';
+                        }, 2000);
+                    } else {
+                        Toast.fire({
+                            icon: 'error',
+                            title: response.message || 'Login failed!'
+                        });
+                        // Reset button
+                        submitBtn.prop('disabled', false);
+                        spinner.hide();
+                        btnText.text('Login');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Server error!';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMessage = response.message || errorMessage;
+                    } catch(e) {}
+                    
+                    Toast.fire({
+                        icon: 'error',
+                        title: errorMessage
+                    });
+                    // Reset button
+                    submitBtn.prop('disabled', false);
+                    spinner.hide();
+                    btnText.text('Login');
                 }
             });
+        });
+        
+        // Allow Enter key to submit
+        $('#username, #password').keypress(function(e) {
+            if (e.which === 13) {
+                $('#loginForm').submit();
+            }
         });
     </script>
 </body>
+
 </html>

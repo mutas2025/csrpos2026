@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 19, 2026 at 01:29 PM
+-- Generation Time: Mar 24, 2026 at 09:09 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,7 +42,9 @@ CREATE TABLE `tbl_customers` (
 --
 
 INSERT INTO `tbl_customers` (`objid`, `customer_code`, `fullname`, `email`, `phone`, `address`, `date_created`) VALUES
-(1, 'R1225', 'MUTAS, JOMAR M.', 'mutas@csr-scc.edu.ph', '09101882719', 'San Carlos City, NIR', '2026-03-13 10:40:38');
+(1, 'R1225', 'MUTAS, JOMAR M.', 'mutas@csr-scc.edu.ph', '09101882719', 'Brgy. 1 San Carlos City, NIR', '2026-03-13 10:40:38'),
+(2, '32432', 'Perez, Drun', 'perez@csr.com', '2345233', 'Panoolan San Carlos City', '2026-03-24 07:10:49'),
+(3, 'C21444421', 'Esguerra, Earl Vincent Son', 'son@gmail.com', '098236451235', 'Vallehersmoso Negros Oriental', '2026-03-24 07:51:23');
 
 -- --------------------------------------------------------
 
@@ -65,7 +67,7 @@ CREATE TABLE `tbl_products` (
 --
 
 INSERT INTO `tbl_products` (`objid`, `product_code`, `product_name`, `category`, `price`, `stock`, `date_created`) VALUES
-(4, 'F1254', 'SABON', 'Panglaba', 5.00, 10, '2026-03-19 12:23:04');
+(4, 'S1312423', 'Honor 400', 'Electronics', 23999.00, 50, '2026-03-24 08:03:45');
 
 -- --------------------------------------------------------
 
@@ -79,10 +81,11 @@ CREATE TABLE `tbl_users` (
   `fullname` varchar(100) NOT NULL,
   `department` varchar(100) DEFAULT NULL,
   `user_type` enum('admin','manager','cashier','staff') NOT NULL,
+  `status` enum('APPROVED','DISAPPROVED','','') NOT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
   `contactno` varchar(20) DEFAULT NULL,
-  `password` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
   `terms_agreed` tinyint(1) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -92,9 +95,11 @@ CREATE TABLE `tbl_users` (
 -- Dumping data for table `tbl_users`
 --
 
-INSERT INTO `tbl_users` (`objid`, `idno`, `fullname`, `department`, `user_type`, `username`, `email`, `contactno`, `password`, `terms_agreed`, `created_at`, `updated_at`) VALUES
-(2, '1997022201', 'Jomar Mutas', 'IT', 'admin', 'jomar', 'jomarmutas@csr-scc.edu.ph', '09101882719', '$2y$10$ZyQgO6M2xVFUBTCUs94Xdu.sRLqu.XdejaDIqEH9gJBffOYCIex2K', 0, '2026-03-19 12:05:04', '2026-03-19 12:05:04'),
-(3, '2004021687', 'Earl Esguerra', 'CBAM', 'staff', 'udoy', 'earl@csr-scc.edu.ph', '09101882718', '$2y$10$Cpl6dj.RIN31afGBtFER8uwlIzPbW1DoEEfEiqhsWXlQ/760meLm6', 0, '2026-03-19 12:09:19', '2026-03-19 12:09:19');
+INSERT INTO `tbl_users` (`objid`, `idno`, `fullname`, `department`, `user_type`, `status`, `username`, `email`, `contactno`, `password_hash`, `terms_agreed`, `created_at`, `updated_at`) VALUES
+(2, '1086561283', 'Mutas, Jomar M.', 'IT', 'admin', 'DISAPPROVED', 'joms', 'joms@gmail.com', '09101882719', '$2y$10$KbaWF/a.WK7fge2kO6suQOgL8hu2J1AYo8WBuJYkJereLS6Fic.wu', 0, '2026-03-24 06:31:28', '2026-03-24 06:45:00'),
+(3, '234512893', 'Oberes, Felix', 'IT', 'manager', 'APPROVED', 'felix', 'oberes@gmail.com', '0254236956', '$2y$10$OSHsIB1bPHAxnzcdRak1..jBaKJ5ZgAIkbTWI37Qq7M16BcJnkIjW', 0, '2026-03-24 06:36:09', '2026-03-24 07:26:19'),
+(5, '37892562', 'De Asis,  Raniel', 'IT', 'admin', 'DISAPPROVED', 'raniel', 'raniel@gmail.com', '0910972837342', '$2y$10$qHOMfL0kM7wmzO9GUP7Ab.A4CgfFeCUIbU5wtR4sJJENfWESugxAa', 1, '2026-03-24 07:54:06', '2026-03-24 08:02:44'),
+(6, '634245642319', 'Donan, Billy', 'IT', 'cashier', 'APPROVED', 'donan', 'd@gmail.com', '3245436544', '$2y$10$7w1xMXcHT4DX0aa/iaSsYudGmuxuW6.0DiIBBCGJqpWF2HOO.2NkC', 1, '2026-03-24 08:01:17', '2026-03-24 08:02:49');
 
 --
 -- Indexes for dumped tables
@@ -131,7 +136,7 @@ ALTER TABLE `tbl_users`
 -- AUTO_INCREMENT for table `tbl_customers`
 --
 ALTER TABLE `tbl_customers`
-  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `tbl_products`
@@ -143,7 +148,7 @@ ALTER TABLE `tbl_products`
 -- AUTO_INCREMENT for table `tbl_users`
 --
 ALTER TABLE `tbl_users`
-  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `objid` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

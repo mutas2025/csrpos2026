@@ -37,10 +37,10 @@ require_once __DIR__ . '/controllers/CustomerController.php';
 // ============================================================================
 // SECTION 4: PARSE THE INCOMING REQUEST
 // ============================================================================
- $method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'];
 
 // Parse input. Prioritize JSON body for PUT/POST, fallback to $_REQUEST
- $input = [];
+$input = [];
 if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
     $rawInput = file_get_contents('php://input');
     $decoded = json_decode($rawInput, true);
@@ -59,28 +59,29 @@ if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
 // ============================================================================
 
 // Get the directory name of this script relative to the web root
- $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
- $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Remove the base path from the URI to get the endpoint
- $pathInfo = substr($uri, strlen($scriptName));
- $pathInfo = trim($pathInfo, '/');
+$pathInfo = substr($uri, strlen($scriptName));
+$pathInfo = trim($pathInfo, '/');
 
 // Remove 'routes.php' if it appears in the path
- $pathInfo = str_replace('routes.php', '', $pathInfo);
- $pathInfo = trim($pathInfo, '/');
+$pathInfo = str_replace('routes.php', '', $pathInfo);
+$pathInfo = trim($pathInfo, '/');
 
- $segments = explode('/', $pathInfo);
+$segments = explode('/', $pathInfo);
 
-// Determine resource (e.g., 'products') and optional ID (e.g. '5')
- $resource = $segments[0] ?? '';
- $id = $segments[1] ?? null;
+// Determine resource (e.g., 'users') and optional ID/sub-action (e.g. '5' or 'status/5')
+$resource = $segments[0] ?? '';
+$action   = $segments[1] ?? null; // Can be an ID or a sub-resource like 'status'
+$id       = $segments[2] ?? null; // Used if action is a sub-resource (e.g. /users/status/5)
 
 // ============================================================================
 // SECTION 6: DISPATCH TO THE CORRECT CONTROLLER
 // ============================================================================
 
- $response = [];
+$response = [];
 
 try {
     // Simple validation to ensure a resource was requested
@@ -93,7 +94,7 @@ try {
     switch ($resource) {
         
         // ====================================================================
-        // CASE: User Registration
+        // CASE: User Registration (standalone endpoint)
         // ====================================================================
         case 'register':
             if ($method === 'POST') {
@@ -123,21 +124,53 @@ try {
         // ====================================================================
         case 'users':
             $controller = new UsersController();
+            
+            // CASE: Sub-resource routing (e.g., /users/status/5)
+            if ($action === 'status' && !empty($id)) {
+                if ($method === 'PUT' || $method === 'POST') {
+                    // Route to updateStatus method
+                    // Input is expected to be JSON: { "status": "APPROVED" }
+                    $status = $input['status'] ?? 'APPROVED';
+                    $response = $controller->updateStatus($id, $status);
+                } else {
+                    http_response_code(405);
+                    $response = ['status' => 'error', 'message' => 'Use PUT or POST for status updates.'];
+                }
+                break; // Exit switch after handling sub-resource
+            }
+
+            // CASE: Standard REST routing (e.g., /users or /users/5)
             switch ($method) {
                 case 'GET':
                     $response = $controller->getUsers();
                     break;
                 case 'POST':
-                    if (!isset($input['repassword'])) { $input['repassword'] = $input['password'] ?? ''; }
+                    // For adding new users, ensure repassword exists for validation
+                    if (!isset($input['repassword'])) { 
+                        $input['repassword'] = $input['password'] ?? ''; 
+                    }
                     $response = $controller->register($input);
                     break;
                 case 'PUT':
-                    if ($id) { $input['objid'] = $id; }
-                    $response = $controller->updateUser($input);
+                    // If action is numeric, it's an ID: /users/5
+                    if (is_numeric($action)) {
+                        $input['objid'] = $action;
+                        $response = $controller->updateUser($input);
+                    } elseif (!empty($action)) {
+                        // If action is not numeric and not 'status', it's an invalid endpoint
+                        http_response_code(404);
+                        $response = ['status' => 'error', 'message' => 'Unknown user action.'];
+                    } else {
+                        // Bulk update without ID (not typically allowed, catch error)
+                        http_response_code(400);
+                        $response = ['status' => 'error', 'message' => 'User ID required for update.'];
+                    }
                     break;
                 case 'DELETE':
-                    if ($id) {
-                        $response = $controller->deleteUser($id);
+                    // ID is expected in the URL: /users/5
+                    $deleteId = $action; 
+                    if ($deleteId) {
+                        $response = $controller->deleteUser($deleteId);
                     } else {
                         http_response_code(400);
                         $response = ['status' => 'error', 'message' => 'ID required for delete.'];
@@ -154,6 +187,8 @@ try {
         // ====================================================================
         case 'products':
             $controller = new ProductController();
+            $prodId = $action; // $action holds the ID in this context (e.g., /products/5)
+
             switch ($method) {
                 case 'GET':
                     $response = $controller->getProducts();
@@ -162,12 +197,12 @@ try {
                     $response = $controller->createProduct($input);
                     break;
                 case 'PUT':
-                    if ($id) { $input['objid'] = $id; }
+                    if ($prodId) { $input['objid'] = $prodId; }
                     $response = $controller->updateProduct($input);
                     break;
                 case 'DELETE':
-                    if ($id) {
-                        $response = $controller->deleteProduct($id);
+                    if ($prodId) {
+                        $response = $controller->deleteProduct($prodId);
                     } else {
                         http_response_code(400);
                         $response = ['status' => 'error', 'message' => 'ID required.'];
@@ -184,6 +219,8 @@ try {
         // ====================================================================
         case 'customers':
             $controller = new CustomerController();
+            $custId = $action; // $action holds the ID
+
             switch ($method) {
                 case 'GET':
                     $response = $controller->getCustomers();
@@ -192,12 +229,12 @@ try {
                     $response = $controller->createCustomer($input);
                     break;
                 case 'PUT':
-                    if ($id) { $input['objid'] = $id; }
+                    if ($custId) { $input['objid'] = $custId; }
                     $response = $controller->updateCustomer($input);
                     break;
                 case 'DELETE':
-                    if ($id) {
-                        $response = $controller->deleteCustomer($id);
+                    if ($custId) {
+                        $response = $controller->deleteCustomer($custId);
                     } else {
                         http_response_code(400);
                         $response = ['status' => 'error', 'message' => 'ID required.'];
@@ -223,11 +260,13 @@ try {
     }
 } catch (Exception $e) {
     // Log error to file if possible, don't echo details in production
+    error_log("API Error: " . $e->getMessage());
     http_response_code(500);
-    $response = ['status' => 'error', 'message' => 'Server error: ' . $e->getMessage()];
+    $response = ['status' => 'error', 'message' => 'Server error occurred.'];
 }
 
 // ============================================================================
 // SECTION 8: SEND THE RESPONSE
 // ============================================================================
 echo json_encode($response);
+?>
