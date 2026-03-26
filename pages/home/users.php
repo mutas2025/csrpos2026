@@ -28,15 +28,14 @@
         .content-wrapper { min-height: 100vh; }
         table.dataTable thead th { background-color: #343a40; color: white; }
         .dropdown-menu { min-width: 10rem; }
+        
         /* Status Badges */
         .badge-approved { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; }
         .badge-disapproved { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; }
         .badge-pending { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; }
         
         /* Modal styles */
-        .modal-lg {
-            max-width: 800px;
-        }
+        .modal-lg { max-width: 800px; }
         
         .view-table td {
             padding: 8px;
@@ -269,6 +268,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!-- ADDED EDIT BUTTON HERE -->
+                    <button type="button" class="btn btn-warning" id="editFromViewBtn">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
                 </div>
             </div>
         </div>
@@ -297,7 +300,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
 
 <script>
-$(document).ready(function() {
+ $(document).ready(function() {
     // ------------------------------------------------------------------
     // CONFIGURATION
     // ------------------------------------------------------------------
@@ -359,6 +362,7 @@ $(document).ready(function() {
                             disapproveBtn = '<a class="dropdown-item" href="javascript:void(0)" onclick="disapproveUser(\'' + row.objid + '\')"><i class="fas fa-times-circle mr-2 text-danger"></i>Disapprove</a>';
                         }
 
+                        // REMOVED UPDATE BUTTON FROM DROPDOWN
                         return `
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -369,7 +373,6 @@ $(document).ready(function() {
                                 ${disapproveBtn}
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="viewUser('${row.objid}')"><i class="fas fa-eye mr-2 text-info"></i>View</a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateUser('${row.objid}')"><i class="fas fa-edit mr-2 text-primary"></i>Update</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="deleteUser('${row.objid}')"><i class="fas fa-trash mr-2 text-danger"></i>Delete</a>
                             </div>
@@ -378,10 +381,7 @@ $(document).ready(function() {
                     "orderable": false,
                     "searchable": false
                 }
-            ],
-            "drawCallback": function() {
-                // Re-initialize any tooltips or popovers if needed
-            }
+            ]
         });
         
         // Add buttons after table is initialized
@@ -391,9 +391,7 @@ $(document).ready(function() {
     // Initialize DataTable
     initializeDataTable();
 
-    // ------------------------------------------------------------------
     // Helper function to get user data by ID
-    // ------------------------------------------------------------------
     function getUserDataById(objid) {
         return usersData.find(user => user.objid == objid);
     }
@@ -421,7 +419,6 @@ $(document).ready(function() {
     // 2. VIEW USER
     // ------------------------------------------------------------------
     window.viewUser = function(objid) {
-        console.log('Viewing user:', objid);
         var userData = getUserDataById(objid);
         
         if(userData) {
@@ -448,19 +445,20 @@ $(document).ready(function() {
             $('#v_status').html(statusHtml);
             $('#v_created_at').text(userData.created_at || 'N/A');
             
+            // Store the ID on the Edit button for reference
+            $('#editFromViewBtn').data('objid', objid);
+            
             // Show the modal
             $('#viewModal').modal('show');
         } else {
-            console.error('User not found:', objid);
-            Swal.fire("Error", "Could not retrieve user data. User ID: " + objid, "error");
+            Swal.fire("Error", "Could not retrieve user data.", "error");
         }
     }
 
     // ------------------------------------------------------------------
-    // 3. UPDATE USER
+    // 3. UPDATE USER (Logic to populate form)
     // ------------------------------------------------------------------
     window.updateUser = function(objid) {
-        console.log('Updating user:', objid);
         var userData = getUserDataById(objid);
         
         if(userData) {
@@ -493,10 +491,22 @@ $(document).ready(function() {
             });
             $('#userModal').modal('show');
         } else {
-            console.error('User not found:', objid);
-            Swal.fire("Error", "Could not retrieve user data for update. User ID: " + objid, "error");
+            Swal.fire("Error", "Could not retrieve user data for update.", "error");
         }
     }
+
+    // ------------------------------------------------------------------
+    // EDIT BUTTON CLICK HANDLER (Inside View Modal)
+    // ------------------------------------------------------------------
+    $('#editFromViewBtn').on('click', function() {
+        var objid = $(this).data('objid');
+        $('#viewModal').modal('hide'); // Hide the View Modal
+        
+        // Small delay to allow modal transition
+        setTimeout(function() {
+            updateUser(objid); // Open the Edit Modal
+        }, 300);
+    });
 
     // ------------------------------------------------------------------
     // 4. APPROVE USER
@@ -524,7 +534,6 @@ $(document).ready(function() {
                         }
                     },
                     error: function(xhr) {
-                        console.error('Error approving user:', xhr);
                         Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
                     }
                 });
@@ -558,7 +567,6 @@ $(document).ready(function() {
                         }
                     },
                     error: function(xhr) {
-                        console.error('Error disapproving user:', xhr);
                         Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
                     }
                 });
@@ -590,7 +598,6 @@ $(document).ready(function() {
                         }
                     },
                     error: function(xhr) {
-                        console.error('Error deleting user:', xhr);
                         Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
                     }
                 });
@@ -684,7 +691,6 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 Swal.close();
-                console.error('Form submission error:', xhr);
                 var errorMsg = 'Server communication error.';
                 if(xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;

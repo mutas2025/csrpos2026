@@ -29,29 +29,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ============================================================================
 // SECTION 3: LOAD DEPENDENT CLASSES
 // ============================================================================
-require_once __DIR__ . '/controllers/UsersController.php';
-require_once __DIR__ . '/controllers/LoginController.php';
-require_once __DIR__ . '/controllers/ProductController.php';
-require_once __DIR__ . '/controllers/CustomerController.php';
+// Get the absolute path to the controllers directory
+$basePath = dirname(__DIR__);
+$controllersPath = $basePath . '/api/controllers/';
+
+// Check if files exist before requiring
+$usersControllerFile = $controllersPath . 'UsersController.php';
+$loginControllerFile = $controllersPath . 'LoginController.php';
+$productControllerFile = $controllersPath . 'ProductController.php';
+$customerControllerFile = $controllersPath . 'CustomerController.php';
+
+if (file_exists($usersControllerFile)) {
+    require_once $usersControllerFile;
+} else {
+    error_log("UsersController.php not found at: " . $usersControllerFile);
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Server configuration error: UsersController not found']);
+    exit;
+}
+
+if (file_exists($loginControllerFile)) {
+    require_once $loginControllerFile;
+}
+
+if (file_exists($productControllerFile)) {
+    require_once $productControllerFile;
+}
+
+if (file_exists($customerControllerFile)) {
+    require_once $customerControllerFile;
+}
 
 // ============================================================================
 // SECTION 4: PARSE THE INCOMING REQUEST
 // ============================================================================
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Log the request for debugging
+error_log("Request Method: " . $method);
+error_log("Request URI: " . $_SERVER['REQUEST_URI']);
+
 // Parse input. Prioritize JSON body for PUT/POST, fallback to $_REQUEST
 $input = [];
 if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
     $rawInput = file_get_contents('php://input');
+    error_log("Raw Input: " . $rawInput);
+    
     $decoded = json_decode($rawInput, true);
     if (json_last_error() === JSON_ERROR_NONE) {
         $input = $decoded;
+        error_log("Decoded JSON: " . print_r($input, true));
     } else {
         // Fallback for standard form-data if JSON decode fails
-        $input = $_POST; 
+        $input = $_POST;
+        error_log("Using POST data: " . print_r($input, true));
     }
 } else {
     $input = $_REQUEST;
+    error_log("GET/REQUEST data: " . print_r($input, true));
 }
 
 // ============================================================================
@@ -61,6 +96,9 @@ if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
 // Get the directory name of this script relative to the web root
 $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+error_log("Script Name: " . $scriptName);
+error_log("URI: " . $uri);
 
 // Remove the base path from the URI to get the endpoint
 $pathInfo = substr($uri, strlen($scriptName));
@@ -76,6 +114,10 @@ $segments = explode('/', $pathInfo);
 $resource = $segments[0] ?? '';
 $action   = $segments[1] ?? null; // Can be an ID or a sub-resource like 'status'
 $id       = $segments[2] ?? null; // Used if action is a sub-resource (e.g. /users/status/5)
+
+error_log("Resource: " . $resource);
+error_log("Action: " . $action);
+error_log("ID: " . $id);
 
 // ============================================================================
 // SECTION 6: DISPATCH TO THE CORRECT CONTROLLER
@@ -94,12 +136,12 @@ try {
     switch ($resource) {
         
         // ====================================================================
-        // CASE: User Registration (standalone endpoint)
+        // CASE: User Registration (standalone endpoint - ADD)
         // ====================================================================
-        case 'register':
+        case 'add':
             if ($method === 'POST') {
                 $controller = new UsersController();
-                $response = $controller->register($input);
+                $response = $controller->addUser($input);
             } else {
                 http_response_code(405);
                 $response = ['status' => 'error', 'message' => 'Invalid method. Use POST.'];
@@ -111,8 +153,12 @@ try {
         // ====================================================================
         case 'login':
             if ($method === 'POST') {
-                $controller = new LoginController();
-                $response = $controller->login($input['username'] ?? '', $input['password'] ?? '');
+                if (class_exists('LoginController')) {
+                    $controller = new LoginController();
+                    $response = $controller->login($input['username'] ?? '', $input['password'] ?? '');
+                } else {
+                    $response = ['status' => 'error', 'message' => 'LoginController not found'];
+                }
             } else {
                 http_response_code(405);
                 $response = ['status' => 'error', 'message' => 'Invalid method. Use POST.'];
@@ -123,6 +169,11 @@ try {
         // CASE: Users
         // ====================================================================
         case 'users':
+            if (!class_exists('UsersController')) {
+                $response = ['status' => 'error', 'message' => 'UsersController not found'];
+                break;
+            }
+            
             $controller = new UsersController();
             
             // CASE: Sub-resource routing (e.g., /users/status/5)
@@ -149,7 +200,7 @@ try {
                     if (!isset($input['repassword'])) { 
                         $input['repassword'] = $input['password'] ?? ''; 
                     }
-                    $response = $controller->register($input);
+                    $response = $controller->addUser($input);
                     break;
                 case 'PUT':
                     // If action is numeric, it's an ID: /users/5
@@ -186,6 +237,11 @@ try {
         // CASE: Products
         // ====================================================================
         case 'products':
+            if (!class_exists('ProductController')) {
+                $response = ['status' => 'error', 'message' => 'ProductController not found'];
+                break;
+            }
+            
             $controller = new ProductController();
             $prodId = $action; // $action holds the ID in this context (e.g., /products/5)
 
@@ -220,6 +276,11 @@ try {
         // CASE: Customers
         // ====================================================================
         case 'customers':
+            if (!class_exists('CustomerController')) {
+                $response = ['status' => 'error', 'message' => 'CustomerController not found'];
+                break;
+            }
+            
             $controller = new CustomerController();
             $custId = $action; // $action holds the ID
 
@@ -251,6 +312,23 @@ try {
             break;
 
         // ====================================================================
+        // CASE: Test endpoint for debugging
+        // ====================================================================
+        case 'test':
+            $response = [
+                'status' => 'success',
+                'message' => 'API is working',
+                'data' => [
+                    'method' => $method,
+                    'resource' => $resource,
+                    'action' => $action,
+                    'id' => $id,
+                    'input' => $input
+                ]
+            ];
+            break;
+
+        // ====================================================================
         // CASE: Invalid or Unknown Resource
         // ====================================================================
         default:
@@ -258,15 +336,16 @@ try {
             $response = [
                 'status' => 'error',
                 'message' => "Resource '{$resource}' not found.",
-                'hint' => 'Available endpoints: /register, /login, /users, /products, /customers'
+                'hint' => 'Available endpoints: /add, /login, /users, /products, /customers, /test'
             ];
             break;
     }
 } catch (Exception $e) {
     // Log error to file if possible, don't echo details in production
     error_log("API Error: " . $e->getMessage());
+    error_log("API Error Trace: " . $e->getTraceAsString());
     http_response_code(500);
-    $response = ['status' => 'error', 'message' => 'Server error occurred.'];
+    $response = ['status' => 'error', 'message' => 'Server error occurred: ' . $e->getMessage()];
 }
 
 // ============================================================================

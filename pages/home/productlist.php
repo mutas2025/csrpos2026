@@ -391,9 +391,7 @@ $(document).ready(function() {
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="viewProduct('${row.objid}')">
                                     <i class="fas fa-eye mr-2 text-info"></i>View
                                 </a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateProduct('${row.objid}')">
-                                    <i class="fas fa-edit mr-2 text-primary"></i>Update
-                                </a>
+                           
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteProduct('${row.objid}')">
                                     <i class="fas fa-trash mr-2"></i>Delete

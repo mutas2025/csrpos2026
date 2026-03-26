@@ -244,14 +244,6 @@
                                     <th>Address:</th>
                                     <td id="v_address">-</td>
                                 </tr>
-                                <tr>
-                                    <th>Created At:</th>
-                                    <td id="v_created_at">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Last Updated:</th>
-                                    <td id="v_updated_at">-</td>
-                                </tr>
                             </table>
                         </div>
                     </div>
@@ -356,9 +348,6 @@ $(document).ready(function() {
                             <div class="dropdown-menu">
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="viewCustomer('${row.objid}')">
                                     <i class="fas fa-eye mr-2 text-info"></i>View
-                                </a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="updateCustomer('${row.objid}')">
-                                    <i class="fas fa-edit mr-2 text-primary"></i>Update
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteCustomer('${row.objid}')">
