@@ -1,81 +1,67 @@
 <?php
-// LoginController.php
-// This file is responsible for handling user login requests for our API.
-
-// We need to connect to the database, so we include our connection script.
-// dirname(__DIR__) gets the parent directory of the current directory (which is 'api'),
-// so it correctly finds the 'config' folder.
+// Include database configuration
 require_once dirname(__DIR__) . '/config/db_connect.php';
 
-/**
- * Class LoginController
- * This class organizes all the functions related to user login.
- */
-class LoginController {
-    // A private property to hold our database connection object.
-    private $con;
+// Initialize variables
+ $success_message = '';
+ $error_message = '';
 
-    /**
-     * The constructor method. This is automatically called when a new LoginController object is created.
-     * Its job is to set up the database connection.
-     */
-    public function __construct() {
-        // The `$con` variable comes from our included 'db_connect.php' file.
-        // We assign it to our private `$con` property so we can use it in other methods in this class.
-        global $con;
-        $this->con = $con;
-    }
+// Handle Registration Form Submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        // 1. Sanitize and Retrieve Inputs
+        $idno = trim($_POST['idNumber']);
+        $fullname = trim($_POST['fullName']);
+        $department = trim($_POST['department']);
+        $user_type = trim($_POST['userType']);
+        $username = trim($_POST['username']);
+        $email = trim($_POST['email']);
+        $contactno = trim($_POST['contactNumber']);
+        $password = $_POST['password'];
+        $retype_password = $_POST['retypePassword'];
 
-    /**
-     * The login method. This function handles the actual process of authenticating a user.
-     * @param string $username The username provided by the user.
-     * @param string $password The plain-text password provided by the user.
-     * @return array An array containing the status of the login attempt.
-     */
-    public function login($username, $password) {
-        
-        // --- Step 1: Find the user by their username ---
-
-        // We prepare our SQL query. Using a question mark (?) as a placeholder
-        // helps prevent a common web vulnerability called SQL injection.
-        $stmt = $this->con->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
-        
-        // We execute the prepared statement, passing the user-provided username
-        // into the placeholder. Check both username and email fields.
-        $stmt->execute([$username, $username]);
-        
-        // We fetch (get) the user's data from the database.
-        // If no user is found with that username, $user will be false.
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // --- Step 2: Verify the password ---
-
-        // We check if a user was found AND if the provided password matches the hashed password in the database.
-        // `password_verify()` is a secure PHP function specifically for this purpose.
-        if ($user && password_verify($password, $user['password'])) {
-            
-            // --- Step 3: Successful Login ---
-
-            // Security Best Practice: Remove the hashed password from the user data
-            // before sending it back. We don't want to expose it.
-            unset($user['password']);
-
-            // Return a success message along with the user's data.
-            return [
-                'status' => 'success',
-                'message' => 'Login successful!',
-                'user' => $user
-            ];
-        } else {
-            
-            // --- Step 4: Failed Login ---
-
-            // If the user wasn't found or the password was incorrect,
-            // return an error message. We use a generic message for security.
-            return [
-                'status' => 'error',
-                'message' => 'Invalid username/email or password'
-            ];
+        // 2. Validations
+        if (empty($idno) || empty($fullname) || empty($username) || empty($email) || empty($password)) {
+            throw new Exception("All required fields must be filled.");
         }
+
+        if ($password !== $retype_password) {
+            throw new Exception("Passwords do not match.");
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Invalid email format.");
+        }
+
+        // 3. Check for duplicates (Username or ID Number)
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM tbl_users WHERE username = ? OR idno = ?");
+        $checkStmt->execute([$username, $idno]);
+        if ($checkStmt->fetchColumn() > 0) {
+            throw new Exception("Username or ID Number already exists.");
+        }
+
+        // 4. Hash Password
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        // 5. Insert into Database
+        $stmt = $pdo->prepare("INSERT INTO tbl_users (idno, fullname, username, password, email, contactno, department, user_type) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        $stmt->execute([
+            $idno, 
+            $fullname, 
+            $username, 
+            $hashed_password, 
+            $email, 
+            $contactno, 
+            $department, 
+            $user_type
+        ]);
+
+        $success_message = "Registration successful! You can now login.";
+
+    } catch (Exception $e) {
+        $error_message = $e->getMessage();
     }
 }
+?>
