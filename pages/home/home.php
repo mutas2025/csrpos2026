@@ -1,7 +1,7 @@
 <?php 
 // home.php
 // Main Dashboard Page
-// Displays summary statistics and recent activities.
+// Displays summary statistics and quick access links.
 ?>
 
 <!DOCTYPE html>
@@ -15,7 +15,6 @@
     <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
 
     <!-- Google Font: Source Sans Pro -->
-    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <link rel="stylesheet" href="../../dist/css/font.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
@@ -27,12 +26,21 @@
     <style>
         .content-wrapper { min-height: 100vh; }
         /* Center cards vertically in small boxes */
-        .small-box .inner { display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
-        /* Loading spinner for widgets */
-        .overlay-spinner {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.7); display: flex; 
-            align-items: center; justify-content: center; z-index: 10;
+        .small-box .inner { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
+            height: 100%; 
+        }
+        /* Custom styling for stat cards */
+        .stat-card {
+            border-radius: 0.5rem;
+            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.3;
         }
     </style>
 </head>
@@ -123,48 +131,53 @@
                     </div>
                 </div>
 
-                <!-- RECENT ACTIVITY SECTION -->
+                <!-- STATISTICS & QUICK LINKS SECTION -->
                 <div class="row">
+                    <!-- Statistics Card -->
                     <div class="col-lg-6">
-                        <div class="card">
+                        <div class="card stat-card">
                             <div class="card-header">
                                 <h3 class="card-title">
-                                    <i class="fas fa-box mr-1"></i>
-                                    Latest Products
+                                    <i class="fas fa-chart-pie mr-1"></i>
+                                    System Statistics
                                 </h3>
                                 <div class="card-tools">
-                                    <span class="badge badge-danger">New</span>
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="card-body p-0">
-                                <ul class="products-list product-list-in-card pl-2 pr-2 pt-2 pb-2" id="recent-products-list">
-                                    <!-- Filled via JS -->
-                                    <li class="text-center text-muted py-3">Loading...</li>
-                                </ul>
+                                <table class="table table-striped table-valign-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th>Count</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Registered Users</td>
+                                            <td><span id="stat-users" class="badge bg-info">0</span></td>
+                                            <td><span class="text-success"><i class="fas fa-check-circle"></i> Active</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Product Inventory</td>
+                                            <td><span id="stat-products" class="badge bg-success">0</span></td>
+                                            <td><span class="text-muted"><i class="fas fa-box"></i> In Stock</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Customer Database</td>
+                                            <td><span id="stat-customers" class="badge bg-warning">0</span></td>
+                                            <td><span class="text-primary"><i class="fas fa-database"></i> Verified</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    <i class="fas fa-users mr-1"></i>
-                                    Newest Customers
-                                </h3>
-                                <div class="card-tools">
-                                    <span class="badge badge-info">New</span>
-                                </div>
-                            </div>
-                            <div class="card-body p-0">
-                                <ul class="products-list product-list-in-card pl-2 pr-2 pt-2 pb-2" id="recent-customers-list">
-                                    <!-- Filled via JS -->
-                                    <li class="text-center text-muted py-3">Loading...</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
             </div>
         </section>
@@ -186,108 +199,56 @@
 
     $(function () {
         // Load Dashboard Stats
-        loadCounts();
-        loadRecentProducts();
-        loadRecentCustomers();
+        loadStatistics();
     });
 
     // ===================================================================
-    // STATISTICS COUNTING
+    // STATISTICS LOADER
     // ===================================================================
-    function loadCounts() {
-        // Fetch Users Count
+    function loadStatistics() {
+        // 1. Fetch Users
         fetch(`${API_URL}/users`)
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    $('#count-users').html(data.data.length);
+                    const count = data.data.length;
+                    $('#count-users').html(count);
+                    $('#stat-users').html(count);
                 }
             })
-            .catch(err => $('#count-users').html('Err'));
-
-        // Fetch Products Count
-        fetch(`${API_URL}/products`)
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    $('#count-products').html(data.data.length);
-                }
-            })
-            .catch(err => $('#count-products').html('Err'));
-
-        // Fetch Customers Count
-        fetch(`${API_URL}/customers`)
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    $('#count-customers').html(data.data.length);
-                }
-            })
-            .catch(err => $('#count-customers').html('Err'));
-    }
-
-    // ===================================================================
-    // RECENT DATA DISPLAY
-    // ===================================================================
-    function loadRecentProducts() {
-        fetch(`${API_URL}/products`)
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success' && data.data.length > 0) {
-                    let html = '';
-                    // Show only the last 5 products
-                    // Ideally, your API should have a limit parameter (e.g. ?limit=5), 
-                    // but for now we slice the array.
-                    let recentItems = data.data.slice(-5).reverse();
-                    
-                    recentItems.forEach(item => {
-                        html += `
-                        <li class="item">
-                            <div class="product-img">
-                                <img src="../../dist/img/default-150x150.png" alt="Product Image" class="img-size-50">
-                            </div>
-                            <div class="product-info">
-                                <a href="javascript:void(0)" class="product-title">${item.product_name}</a>
-                                <span class="product-description">
-                                    Category: ${item.category} | Stock: ${item.stock}
-                                </span>
-                            </div>
-                        </li>`;
-                    });
-                    $('#recent-products-list').html(html);
-                } else {
-                    $('#recent-products-list').html('<li class="text-center text-muted py-3">No products found</li>');
-                }
+            .catch(err => {
+                $('#count-users').html('Err');
+                $('#stat-users').html('Err');
             });
-    }
 
-    function loadRecentCustomers() {
+        // 2. Fetch Products
+        fetch(`${API_URL}/products`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    const count = data.data.length;
+                    $('#count-products').html(count);
+                    $('#stat-products').html(count);
+                }
+            })
+            .catch(err => {
+                $('#count-products').html('Err');
+                $('#stat-products').html('Err');
+            });
+
+        // 3. Fetch Customers
         fetch(`${API_URL}/customers`)
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success' && data.data.length > 0) {
-                    let html = '';
-                    // Show only the last 5 customers
-                    let recentItems = data.data.slice(-5).reverse();
-                    
-                    recentItems.forEach(item => {
-                        html += `
-                        <li class="item">
-                            <div class="product-img">
-                                <img src="../../dist/img/user2-160x160.jpg" alt="User Image" class="img-size-50 img-circle">
-                            </div>
-                            <div class="product-info">
-                                <a href="javascript:void(0)" class="product-title">${item.fullname}</a>
-                                <span class="product-description">
-                                    ${item.email}
-                                </span>
-                            </div>
-                        </li>`;
-                    });
-                    $('#recent-customers-list').html(html);
-                } else {
-                    $('#recent-customers-list').html('<li class="text-center text-muted py-3">No customers found</li>');
+                if(data.status === 'success') {
+                    const count = data.data.length;
+                    $('#count-customers').html(count);
+                    $('#stat-customers').html(count);
                 }
+            })
+            .catch(err => {
+                $('#count-customers').html('Err');
+                $('#stat-customers').html('Err');
             });
     }
 </script>

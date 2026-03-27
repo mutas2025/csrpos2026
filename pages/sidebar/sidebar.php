@@ -11,7 +11,7 @@
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         
-        <!-- Dashboard / Statistics -->
+        <!-- Dashboard -->
         <li id="statistics_sidebar" class="nav-item">
           <a href="home.php" class="nav-link">
             <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -19,52 +19,37 @@
           </a>
         </li>
 
-        <!-- Management Menu (Parent) -->
-        <li id="management_sidebar" class="nav-item menu-open">
-          <a href="home.php" class="nav-link">
-            <i class="nav-icon fas fa-users-cog"></i>
-            <p>
-              Management
-              <i class="right fas fa-angle-left"></i>
-            </p>
+        <!-- Users Link -->
+        <li id="users_sidebar" class="nav-item">
+          <a href="users.php" class="nav-link">
+            <i class="nav-icon fas fa-user"></i>
+            <p>Users</p>
           </a>
-          
-          <!-- Child Items -->
-          <ul class="nav nav-treeview">
-            <!-- Users Link -->
-            <li class="nav-item">
-              <a href="users.php" class="nav-link">
-                <i class="nav-icon fas fa-user"></i>
-                <p>Users</p>
-              </a>
-            </li>
-            
-            <!-- Products Link -->
-            <li class="nav-item">
-              <a href="productlist.php" class="nav-link">
-                <i class="nav-icon fas fa-box"></i>
-                <p>Products</p>
-              </a>
-            </li>
-
-            <!-- Customer Link -->
-            <li class="nav-item">
-              <a href="customerlist.php" class="nav-link">
-                <i class="nav-icon fas fa-id-card"></i>
-                <p>Customers</p>
-              </a>
-            </li>
-
-              <li class="nav-item">
-              <a href="logout.php" class="nav-link">
-                <i class="nav-icon fas fa-sign-out-alt"></i>
-                <p>Logout</p>
-              </a>
-            </li>
-          </ul>
+        </li>
+        
+        <!-- Products Link -->
+        <li id="products_sidebar" class="nav-item">
+          <a href="productlist.php" class="nav-link">
+            <i class="nav-icon fas fa-box"></i>
+            <p>Products</p>
+          </a>
         </li>
 
+        <!-- Customer Link -->
+        <li id="customers_sidebar" class="nav-item">
+          <a href="customerlist.php" class="nav-link">
+            <i class="nav-icon fas fa-id-card"></i>
+            <p>Customers</p>
+          </a>
+        </li>
 
+        <!-- Logout -->
+        <li class="nav-item">
+          <a href="logout.php" class="nav-link">
+            <i class="nav-icon fas fa-sign-out-alt"></i>
+            <p>Logout</p>
+          </a>
+        </li>
 
       </ul>
     </nav>
@@ -72,3 +57,26 @@
   <!-- /.sidebar -->
 
 </aside>
+
+<!-- JAVASCRIPT TO HANDLE ACTIVE STATE (Place this at the bottom of the page or in your main script file) -->
+<script>
+  $(function() {
+    // Get current page filename
+    var path = window.location.pathname;
+    var page = path.split("/").pop();
+
+    // Remove all active classes first
+    $('.nav-link').removeClass('active');
+
+    // Apply active class based on current page
+    if (page === 'home.php') {
+      $('#statistics_sidebar .nav-link').addClass('active');
+    } else if (page === 'users.php') {
+      $('#users_sidebar .nav-link').addClass('active');
+    } else if (page === 'productlist.php') {
+      $('#products_sidebar .nav-link').addClass('active');
+    } else if (page === 'customerlist.php') {
+      $('#customers_sidebar .nav-link').addClass('active');
+    }
+  });
+</script>
