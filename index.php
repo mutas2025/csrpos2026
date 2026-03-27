@@ -1,75 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>San Carlos City | Franchising</title>
-
     <link rel="stylesheet" href="dist/css/font.css">
     <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="plugins/icheck-bootstrap/icheck-bootstrap.min.css">
     <link rel="stylesheet" href="dist/css/adminlte.min.css">
     <link rel="icon" type="image/png" sizes="40x16" href="dist/img/splogo.png">
-
     <style>
         body {
             font-family: "Asap", sans-serif;
+            background: #6c757d !important;
         }
-
+        .login-box {
+            width: 400px;
+            margin: 0 auto;
+        }
         .login {
-            overflow: hidden;
             background: white;
             padding: 40px 30px 30px 30px;
             border-radius: 10px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 400px;
-            transform: translate(-50%, -50%);
-            transition: transform 300ms, box-shadow 300ms;
+            position: relative;
             box-shadow: 5px 10px 10px rgba(2, 128, 144, 0.2);
+            overflow: hidden;
         }
-
         .login::before,
         .login::after {
             content: "";
             position: absolute;
             width: 600px;
             height: 600px;
-            border-top-left-radius: 40%;
-            border-top-right-radius: 45%;
-            border-bottom-left-radius: 35%;
-            border-bottom-right-radius: 40%;
+            border-radius: 40% 45% 35% 40%;
             z-index: -1;
         }
-
         .login::before {
             left: 15%;
             bottom: -102%;
             background-color: rgba(69, 105, 144, 0.15);
             animation: wawes 6s infinite linear;
         }
-
         .login::after {
             left: 22%;
             bottom: -112%;
             background-color: rgba(2, 128, 144, 0.2);
             animation: wawes 7s infinite;
         }
-
-        .login>input {
+        @keyframes wawes {
+            from { transform: rotate(0); }
+            to { transform: rotate(360deg); }
+        }
+        .login input {
             display: block;
             border-radius: 5px;
             font-size: 16px;
             background: white;
             width: 100%;
-            border: 0;
+            border: 1px solid #ced4da;
             padding: 10px 10px;
-            margin: 15px -10px;
+            margin: 15px 0;
         }
-
-        .login>button {
+        .login button {
             cursor: pointer;
             color: #fff;
             font-size: 16px;
@@ -79,71 +71,69 @@
             padding: 10px 0;
             margin-top: 10px;
             border-radius: 5px;
-            background-color: grey;
             transition: background-color 300ms;
         }
-
-        .login>button:hover {
+        .login-btn {
+            background-color: grey;
+        }
+        .login-btn:hover {
             background-color: #f24353;
         }
-
-        /* REGISTER BUTTON STYLE */
         .register-btn {
             background-color: #007bff;
         }
-
         .register-btn:hover {
             background-color: #0056b3;
         }
-
-        @keyframes wawes {
-            from { transform: rotate(0); }
-            to { transform: rotate(360deg); }
-        }
-
         center {
             font-size: 25px;
             display: block;
             color: black;
+            margin-bottom: 15px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            background: #f8d7da;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .img-logo {
+            mix-blend-mode: multiply;
+            width: 67px;
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
         }
     </style>
 </head>
-
-<body class="hold-transition login-page bg-secondary">
-
+<body class="hold-transition login-page">
     <div class="login-box bg-secondary card">
-        <form action="server-side/login/login.php" method="post" class="login">
-           
+        <form method="post" class="login" id="loginForm">
             <div class="text-center">
                 <img class="profile-user-img img-fluid img-circle"
                      src="dist/img/splogo.png"
                      alt="User profile picture">
             </div>
-
             <center>Sample Login</center>
 
-            <input type="text" id="username" name="username" placeholder="Username" required>
+            <input type="text" id="username" name="username" placeholder="Username or Email" required>
             <input type="password" id="password" name="password" placeholder="Password" required>
 
-            <!-- LOGIN BUTTON -->
-            <button type="button" id="submit_login">Login</button>
+            <button type="submit" id="submit_login" class="login-btn">Login</button>
+            <button type="button" id="go_register" class="register-btn">REGISTER HERE</button>
 
-            <!-- REGISTER HERE BUTTON -->
-            <button type="button" id="go_register" class="register-btn">
-                REGISTER HERE
-            </button>
-
-            <img class="profile-user-img img-fluid border-0"
-                 style="mix-blend-mode: multiply; width: 67px; position: absolute; right: 39px; bottom: 21px;"
+            <img class="profile-user-img img-fluid border-0 img-logo"
                  src="dist/img/itcsologo.png"
-                 alt="User profile picture">
+                 alt="ITCSO Logo">
         </form>
     </div>
 
     <script src="plugins/jquery/jquery.min.js"></script>
     <script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="dist/js/adminlte.min.js"></script>
-    <script src="plugins/fontawesomekit/a757e6f388.js"></script>
     <script src="plugins/sweetalert2/sweetalert2@11.js"></script>
 
     <script>
@@ -159,22 +149,27 @@
             }
         });
 
-        // LOGIN FUNCTION
-        $('#submit_login').click(function(e) {
+        // Handle login via AJAX
+        $('#loginForm').on('submit', function(e) {
             e.preventDefault();
             const username = $('#username').val();
             const password = $('#password').val();
 
+            // Disable submit button to prevent double submission
+            const submitBtn = $('#submit_login');
+            submitBtn.prop('disabled', true).text('Logging in...');
+
             $.ajax({
-                url: 'api/login.php',
+                url: 'api/login.php', // Pointing to the API endpoint
                 type: 'POST',
                 contentType: 'application/json',
+                dataType: 'json',
                 data: JSON.stringify({ username, password }),
                 success: function(response) {
                     if (response.status === 'success') {
                         Toast.fire({
                             icon: 'success',
-                            title: 'Login successful!'
+                            title: response.message || 'Login successful!'
                         });
                         setTimeout(function() {
                             window.location.href = 'pages/home/home.php';
@@ -184,22 +179,27 @@
                             icon: 'error',
                             title: response.message || 'Login failed!'
                         });
+                        submitBtn.prop('disabled', false).text('Login');
                     }
                 },
-                error: function() {
+                error: function(xhr) {
+                    let errMsg = 'Server error! Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errMsg = xhr.responseJSON.message;
+                    }
                     Toast.fire({
                         icon: 'error',
-                        title: 'Server error!'
+                        title: errMsg
                     });
+                    submitBtn.prop('disabled', false).text('Login');
                 }
             });
         });
 
-        // REGISTER REDIRECT
+        // Register redirect
         $('#go_register').click(function() {
             window.location.href = 'registration.php';
         });
     </script>
-
 </body>
 </html>

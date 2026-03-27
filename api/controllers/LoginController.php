@@ -1,67 +1,90 @@
 <?php
-// Include database configuration
+// LoginController.php
+// This class is responsible for handling authentication requests that
+// arrive via the API. It validates credentials against the database
+// and manages session creation for approved users.
+
+// We need access to the database connection, which is created in db_connect.php.
+// `dirname(__DIR__)` moves up one directory (from controllers to api) to locate
+// the config folder regardless of the current working directory.
 require_once dirname(__DIR__) . '/config/db_connect.php';
 
-// Initialize variables
- $success_message = '';
- $error_message = '';
+class LoginController {
+    // store the PDO database connection here so other methods can use it
+    private $con;
 
-// Handle Registration Form Submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        // 1. Sanitize and Retrieve Inputs
-        $idno = trim($_POST['idNumber']);
-        $fullname = trim($_POST['fullName']);
-        $department = trim($_POST['department']);
-        $user_type = trim($_POST['userType']);
-        $username = trim($_POST['username']);
-        $email = trim($_POST['email']);
-        $contactno = trim($_POST['contactNumber']);
-        $password = $_POST['password'];
-        $retype_password = $_POST['retypePassword'];
+    public function __construct() {
+        // the global $con variable is defined in db_connect.php; capture it
+        global $con;
+        $this->con = $con;
+    }
 
-        // 2. Validations
-        if (empty($idno) || empty($fullname) || empty($username) || empty($email) || empty($password)) {
-            throw new Exception("All required fields must be filled.");
+    /**
+     * Authenticate a user.
+     *
+     * This method expects an associative array `$data` containing the login
+     * credentials (username/email and password) sent by the client. 
+     * It returns an array describing the result (status and message), 
+     * which the router will encode as JSON.
+     *
+     * @param array $data Associative array containing 'username' and 'password'.
+     * @return array Response array with status and message.
+     */
+    public function login(array $data) {
+        // ------------------------------------------------------------------
+        // 1. Extract and sanitise input values.
+        $username = trim($data['username'] ?? '');
+        $password = $data['password'] ?? ''; // Password itself is not trimmed to allow spaces
+
+        // ------------------------------------------------------------------
+        // 2. Basic validation: make sure credentials are not empty.
+        if (empty($username) || empty($password)) {
+            return ['status' => 'error', 'message' => 'Please enter username/email and password.'];
         }
 
-        if ($password !== $retype_password) {
-            throw new Exception("Passwords do not match.");
+        // ------------------------------------------------------------------
+        // 3. Attempt to find the user in the database.
+        // We check if the input matches the username OR email, 
+        // and ensure the account status is 'APPROVED'.
+        try {
+            $stmt = $this->con->prepare("SELECT * FROM tbl_users WHERE (username = ? OR email = ?) AND status = 'APPROVED' LIMIT 1");
+            $stmt->execute([$username, $username]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // ------------------------------------------------------------------
+            // 4. Verify user existence and password.
+            if ($user && password_verify($password, $user['password_hash'])) {
+                
+                // --------------------------------------------------------------
+                // 5. Start session and store user data.
+                // Ensuring session is started only if not already active.
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+
+                // Set session variables for use across the application
+                $_SESSION['user_id'] = $user['objid'];
+                $_SESSION['idno'] = $user['idno'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['fullname'] = $user['fullname'];
+                $_SESSION['user_type'] = $user['user_type'];
+                $_SESSION['department'] = $user['department'];
+                $_SESSION['email'] = $user['email'];
+                $_SESSION['contactno'] = $user['contactno'];
+                $_SESSION['status'] = $user['status'];
+                $_SESSION['logged_in'] = true;
+
+                return ['status' => 'success', 'message' => 'Login successful!'];
+
+            } else {
+                // Generic error message to prevent user enumeration
+                return ['status' => 'error', 'message' => 'Invalid username/email or password, or account not approved.'];
+            }
+
+        } catch (PDOException $e) {
+            // In production you would log this error instead of exposing it.
+            return ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()];
         }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new Exception("Invalid email format.");
-        }
-
-        // 3. Check for duplicates (Username or ID Number)
-        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM tbl_users WHERE username = ? OR idno = ?");
-        $checkStmt->execute([$username, $idno]);
-        if ($checkStmt->fetchColumn() > 0) {
-            throw new Exception("Username or ID Number already exists.");
-        }
-
-        // 4. Hash Password
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-        // 5. Insert into Database
-        $stmt = $pdo->prepare("INSERT INTO tbl_users (idno, fullname, username, password, email, contactno, department, user_type) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        
-        $stmt->execute([
-            $idno, 
-            $fullname, 
-            $username, 
-            $hashed_password, 
-            $email, 
-            $contactno, 
-            $department, 
-            $user_type
-        ]);
-
-        $success_message = "Registration successful! You can now login.";
-
-    } catch (Exception $e) {
-        $error_message = $e->getMessage();
     }
 }
 ?>

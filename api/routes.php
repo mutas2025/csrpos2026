@@ -1,8 +1,6 @@
 <?php
 // ============================================================================
-// routes.php
-// ============================================================================
-// Unified RESTful API entry point for all application endpoints.
+// routes.php - Updated with complete login handling
 // ============================================================================
 
 // ============================================================================
@@ -27,41 +25,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // ============================================================================
-// SECTION 3: LOAD DEPENDENT CLASSES
+// SECTION 3: START SESSION
 // ============================================================================
-// Get the absolute path to the controllers directory
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// ============================================================================
+// SECTION 4: LOAD DEPENDENT CLASSES
+// ============================================================================
 $basePath = dirname(__DIR__);
 $controllersPath = $basePath . '/api/controllers/';
 
-// Check if files exist before requiring
-$usersControllerFile = $controllersPath . 'UsersController.php';
-$loginControllerFile = $controllersPath . 'LoginController.php';
-$productControllerFile = $controllersPath . 'ProductController.php';
-$customerControllerFile = $controllersPath . 'CustomerController.php';
+// Define controller files
+$controllers = [
+    'UsersController.php',
+    'LoginController.php',
+    'ProductController.php',
+    'CustomerController.php'
+];
 
-if (file_exists($usersControllerFile)) {
-    require_once $usersControllerFile;
-} else {
-    error_log("UsersController.php not found at: " . $usersControllerFile);
-    http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Server configuration error: UsersController not found']);
-    exit;
-}
-
-if (file_exists($loginControllerFile)) {
-    require_once $loginControllerFile;
-}
-
-if (file_exists($productControllerFile)) {
-    require_once $productControllerFile;
-}
-
-if (file_exists($customerControllerFile)) {
-    require_once $customerControllerFile;
+// Load controllers if they exist
+foreach ($controllers as $controller) {
+    $filePath = $controllersPath . $controller;
+    if (file_exists($filePath)) {
+        require_once $filePath;
+    } else {
+        error_log("Controller not found: " . $filePath);
+    }
 }
 
 // ============================================================================
-// SECTION 4: PARSE THE INCOMING REQUEST
+// SECTION 5: PARSE THE INCOMING REQUEST
 // ============================================================================
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -90,10 +85,8 @@ if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
 }
 
 // ============================================================================
-// SECTION 5: EXTRACT THE RESOURCE PATH (DYNAMIC)
+// SECTION 6: EXTRACT THE RESOURCE PATH
 // ============================================================================
-
-// Get the directory name of this script relative to the web root
 $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
@@ -110,17 +103,17 @@ $pathInfo = trim($pathInfo, '/');
 
 $segments = explode('/', $pathInfo);
 
-// Determine resource (e.g., 'users') and optional ID/sub-action (e.g. '5' or 'status/5')
+// Determine resource and parameters
 $resource = $segments[0] ?? '';
-$action   = $segments[1] ?? null; // Can be an ID or a sub-resource like 'status'
-$id       = $segments[2] ?? null; // Used if action is a sub-resource (e.g. /users/status/5)
+$action   = $segments[1] ?? null;
+$id       = $segments[2] ?? null;
 
 error_log("Resource: " . $resource);
 error_log("Action: " . $action);
 error_log("ID: " . $id);
 
 // ============================================================================
-// SECTION 6: DISPATCH TO THE CORRECT CONTROLLER
+// SECTION 7: DISPATCH TO THE CORRECT CONTROLLER
 // ============================================================================
 
 $response = [];
@@ -136,28 +129,102 @@ try {
     switch ($resource) {
         
         // ====================================================================
-        // CASE: User Registration (standalone endpoint - ADD)
-        // ====================================================================
-        case 'add':
-            if ($method === 'POST') {
-                $controller = new UsersController();
-                $response = $controller->addUser($input);
-            } else {
-                http_response_code(405);
-                $response = ['status' => 'error', 'message' => 'Invalid method. Use POST.'];
-            }
-            break;
-
-        // ====================================================================
         // CASE: User Login
         // ====================================================================
         case 'login':
             if ($method === 'POST') {
                 if (class_exists('LoginController')) {
                     $controller = new LoginController();
-                    $response = $controller->login($input['username'] ?? '', $input['password'] ?? '');
+                    $username = $input['username'] ?? '';
+                    $password = $input['password'] ?? '';
+                    $response = $controller->login($username, $password);
+                } else {
+                    http_response_code(500);
+                    $response = [
+                        'status' => 'error', 
+                        'message' => 'LoginController not found. Please check the installation.'
+                    ];
+                }
+            } else {
+                http_response_code(405);
+                $response = [
+                    'status' => 'error', 
+                    'message' => 'Invalid method. Use POST for login.'
+                ];
+            }
+            break;
+        
+        // ====================================================================
+        // CASE: Check Login Status
+        // ====================================================================
+        case 'check-login':
+            if ($method === 'GET') {
+                if (class_exists('LoginController')) {
+                    $controller = new LoginController();
+                    $response = $controller->checkLoginStatus();
                 } else {
                     $response = ['status' => 'error', 'message' => 'LoginController not found'];
+                }
+            } else {
+                http_response_code(405);
+                $response = ['status' => 'error', 'message' => 'Use GET method'];
+            }
+            break;
+        
+        // ====================================================================
+        // CASE: Logout
+        // ====================================================================
+        case 'logout':
+            if ($method === 'POST' || $method === 'GET') {
+                if (class_exists('LoginController')) {
+                    $controller = new LoginController();
+                    $response = $controller->logout();
+                } else {
+                    $response = ['status' => 'error', 'message' => 'LoginController not found'];
+                }
+            } else {
+                http_response_code(405);
+                $response = ['status' => 'error', 'message' => 'Invalid method'];
+            }
+            break;
+        
+        // ====================================================================
+        // CASE: Change Password
+        // ====================================================================
+        case 'change-password':
+            if ($method === 'POST') {
+                if (class_exists('LoginController')) {
+                    // Check if user is logged in
+                    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+                        http_response_code(401);
+                        $response = ['status' => 'error', 'message' => 'User not logged in'];
+                        break;
+                    }
+                    
+                    $controller = new LoginController();
+                    $userId = $_SESSION['user']['objid'];
+                    $oldPassword = $input['old_password'] ?? '';
+                    $newPassword = $input['new_password'] ?? '';
+                    $response = $controller->changePassword($userId, $oldPassword, $newPassword);
+                } else {
+                    $response = ['status' => 'error', 'message' => 'LoginController not found'];
+                }
+            } else {
+                http_response_code(405);
+                $response = ['status' => 'error', 'message' => 'Use POST method'];
+            }
+            break;
+        
+        // ====================================================================
+        // CASE: User Registration
+        // ====================================================================
+        case 'add':
+            if ($method === 'POST') {
+                if (class_exists('UsersController')) {
+                    $controller = new UsersController();
+                    $response = $controller->addUser($input);
+                } else {
+                    $response = ['status' => 'error', 'message' => 'UsersController not found'];
                 }
             } else {
                 http_response_code(405);
@@ -166,7 +233,7 @@ try {
             break;
 
         // ====================================================================
-        // CASE: Users
+        // CASE: Users Management
         // ====================================================================
         case 'users':
             if (!class_exists('UsersController')) {
@@ -176,52 +243,41 @@ try {
             
             $controller = new UsersController();
             
-            // CASE: Sub-resource routing (e.g., /users/status/5)
+            // Sub-resource routing (e.g., /users/status/5)
             if ($action === 'status' && !empty($id)) {
                 if ($method === 'PUT' || $method === 'POST') {
-                    // Route to updateStatus method
-                    // Input is expected to be JSON: { "status": "APPROVED" }
                     $status = $input['status'] ?? 'APPROVED';
                     $response = $controller->updateStatus($id, $status);
                 } else {
                     http_response_code(405);
                     $response = ['status' => 'error', 'message' => 'Use PUT or POST for status updates.'];
                 }
-                break; // Exit switch after handling sub-resource
+                break;
             }
 
-            // CASE: Standard REST routing (e.g., /users or /users/5)
+            // Standard REST routing
             switch ($method) {
                 case 'GET':
                     $response = $controller->getUsers();
                     break;
                 case 'POST':
-                    // For adding new users, ensure repassword exists for validation
                     if (!isset($input['repassword'])) { 
                         $input['repassword'] = $input['password'] ?? ''; 
                     }
                     $response = $controller->addUser($input);
                     break;
                 case 'PUT':
-                    // If action is numeric, it's an ID: /users/5
                     if (is_numeric($action)) {
                         $input['objid'] = $action;
                         $response = $controller->updateUser($input);
-                    } elseif (!empty($action)) {
-                        // If action is not numeric and not 'status', it's an invalid endpoint
-                        http_response_code(404);
-                        $response = ['status' => 'error', 'message' => 'Unknown user action.'];
                     } else {
-                        // Bulk update without ID (not typically allowed, catch error)
                         http_response_code(400);
                         $response = ['status' => 'error', 'message' => 'User ID required for update.'];
                     }
                     break;
                 case 'DELETE':
-                    // ID is expected in the URL: /users/5
-                    $deleteId = $action; 
-                    if ($deleteId) {
-                        $response = $controller->deleteUser($deleteId);
+                    if ($action) {
+                        $response = $controller->deleteUser($action);
                     } else {
                         http_response_code(400);
                         $response = ['status' => 'error', 'message' => 'ID required for delete.'];
@@ -243,7 +299,7 @@ try {
             }
             
             $controller = new ProductController();
-            $prodId = $action; // $action holds the ID in this context (e.g., /products/5)
+            $prodId = $action;
 
             switch ($method) {
                 case 'GET':
@@ -282,7 +338,7 @@ try {
             }
             
             $controller = new CustomerController();
-            $custId = $action; // $action holds the ID
+            $custId = $action;
 
             switch ($method) {
                 case 'GET':
@@ -323,7 +379,8 @@ try {
                     'resource' => $resource,
                     'action' => $action,
                     'id' => $id,
-                    'input' => $input
+                    'input' => $input,
+                    'session' => isset($_SESSION['user']) ? 'User logged in' : 'No active session'
                 ]
             ];
             break;
@@ -336,16 +393,18 @@ try {
             $response = [
                 'status' => 'error',
                 'message' => "Resource '{$resource}' not found.",
-                'hint' => 'Available endpoints: /add, /login, /users, /products, /customers, /test'
+                'hint' => 'Available endpoints: /login, /logout, /check-login, /change-password, /add, /users, /products, /customers, /test'
             ];
             break;
     }
 } catch (Exception $e) {
-    // Log error to file if possible, don't echo details in production
     error_log("API Error: " . $e->getMessage());
     error_log("API Error Trace: " . $e->getTraceAsString());
     http_response_code(500);
-    $response = ['status' => 'error', 'message' => 'Server error occurred: ' . $e->getMessage()];
+    $response = [
+        'status' => 'error', 
+        'message' => 'Server error occurred: ' . $e->getMessage()
+    ];
 }
 
 // ============================================================================
