@@ -1,6 +1,6 @@
 <?php
 // ============================================================================
-// routes.php - Updated with POS, Transactions, and Sales support
+// routes.php - Updated with POS, Transactions, Sales, and Registration support
 // ============================================================================
 
 // ============================================================================
@@ -44,8 +44,9 @@ if (session_status() === PHP_SESSION_NONE) {
     'ProductController.php',
     'CustomerController.php',
     'PosController.php',
-    'TransactionController.php', // ADDED TRANSACTION CONTROLLER
-    'SalesController.php'         // ADDED SALES CONTROLLER
+    'TransactionController.php',
+    'SalesController.php',
+    'RegisterController.php' // ADDED REGISTER CONTROLLER
 ];
 
 // Load controllers if they exist
@@ -131,6 +132,30 @@ try {
 
     switch ($resource) {
         
+        // ====================================================================
+        // CASE: User Registration (Public)
+        // ====================================================================
+        case 'register':
+            if ($method === 'POST') {
+                if (class_exists('RegisterController')) {
+                    $controller = new RegisterController();
+                    $response = $controller->registerUser($input);
+                } else {
+                    http_response_code(500);
+                    $response = [
+                        'status' => 'error', 
+                        'message' => 'RegisterController not found. Please check the installation.'
+                    ];
+                }
+            } else {
+                http_response_code(405);
+                $response = [
+                    'status' => 'error', 
+                    'message' => 'Invalid method. Use POST for registration.'
+                ];
+            }
+            break;
+
         // ====================================================================
         // CASE: User Login
         // ====================================================================
@@ -219,24 +244,7 @@ try {
             break;
         
         // ====================================================================
-        // CASE: User Registration
-        // ====================================================================
-        case 'add':
-            if ($method === 'POST') {
-                if (class_exists('UsersController')) {
-                    $controller = new UsersController();
-                    $response = $controller->addUser($input);
-                } else {
-                    $response = ['status' => 'error', 'message' => 'UsersController not found'];
-                }
-            } else {
-                http_response_code(405);
-                $response = ['status' => 'error', 'message' => 'Invalid method. Use POST.'];
-            }
-            break;
-
-        // ====================================================================
-        // CASE: Users Management
+        // CASE: User Management (Admin Side)
         // ====================================================================
         case 'users':
             if (!class_exists('UsersController')) {
@@ -473,7 +481,7 @@ try {
             $response = [
                 'status' => 'error',
                 'message' => "Resource '{$resource}' not found.",
-                'hint' => 'Available endpoints: /login, /logout, /check-login, /change-password, /add, /users, /products, /customers, /pos, /transactions, /sales, /test'
+                'hint' => 'Available endpoints: /register, /login, /logout, /check-login, /change-password, /add, /users, /products, /customers, /pos, /transactions, /sales, /test'
             ];
             break;
     }

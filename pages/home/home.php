@@ -1,7 +1,7 @@
 <?php 
 // home.php
 // Main Dashboard Page
-// Displays summary statistics and quick access links.
+// Displays summary statistics, sales charts, and quick access links.
 ?>
 
 <!DOCTYPE html>
@@ -22,6 +22,9 @@
     <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
+    
+    <!-- Chart.js (Required for Bar Graph) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         .content-wrapper { min-height: 100vh; }
@@ -89,7 +92,7 @@
                 <!-- SUMMARY CARDS -->
                 <div class="row">
                     <!-- Users Card -->
-                    <div class="col-lg-4 col-6">
+                    <div class="col-lg-3 col-6">
                         <div class="small-box bg-info">
                             <div class="inner">
                                 <h3 id="count-users"><i class="fas fa-spinner fa-spin"></i></h3>
@@ -103,7 +106,7 @@
                     </div>
                     
                     <!-- Products Card -->
-                    <div class="col-lg-4 col-6">
+                    <div class="col-lg-3 col-6">
                         <div class="small-box bg-success">
                             <div class="inner">
                                 <h3 id="count-products"><i class="fas fa-spinner fa-spin"></i></h3>
@@ -117,7 +120,7 @@
                     </div>
                     
                     <!-- Customers Card -->
-                    <div class="col-lg-4 col-6">
+                    <div class="col-lg-3 col-6">
                         <div class="small-box bg-warning">
                             <div class="inner">
                                 <h3 id="count-customers"><i class="fas fa-spinner fa-spin"></i></h3>
@@ -129,11 +132,25 @@
                             <a href="customerlist.php" class="small-box-footer">View Customers <i class="fas fa-arrow-circle-right"></i></a>
                         </div>
                     </div>
+
+                    <!-- Sales Today Card (NEW) -->
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-danger">
+                            <div class="inner">
+                                <h3 id="count-sales">₱<i class="fas fa-spinner fa-spin"></i></h3>
+                                <p>Sales Today</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <a href="sales.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- STATISTICS & QUICK LINKS SECTION -->
+                <!-- STATISTICS & CHARTS SECTION -->
                 <div class="row">
-                    <!-- Statistics Card -->
+                    <!-- System Statistics Card -->
                     <div class="col-lg-6">
                         <div class="card stat-card">
                             <div class="card-header">
@@ -172,12 +189,39 @@
                                             <td><span id="stat-customers" class="badge bg-warning">0</span></td>
                                             <td><span class="text-primary"><i class="fas fa-database"></i> Verified</span></td>
                                         </tr>
+                                        <tr>
+                                            <td>Transactions (Today)</td>
+                                            <td><span id="stat-transactions" class="badge bg-danger">0</span></td>
+                                            <td><span class="text-warning"><i class="fas fa-shopping-cart"></i> Processed</span></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Sales Chart Card (NEW) -->
+                    <div class="col-lg-6">
+                        <div class="card stat-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-chart-bar mr-1"></i>
+                                    Top Products (Today)
+                                </h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart">
+                                    <canvas id="salesBarChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </section>
@@ -200,6 +244,7 @@
     $(function () {
         // Load Dashboard Stats
         loadStatistics();
+        loadSalesChart();
     });
 
     // ===================================================================
@@ -216,10 +261,7 @@
                     $('#stat-users').html(count);
                 }
             })
-            .catch(err => {
-                $('#count-users').html('Err');
-                $('#stat-users').html('Err');
-            });
+            .catch(err => console.error(err));
 
         // 2. Fetch Products
         fetch(`${API_URL}/products`)
@@ -231,10 +273,7 @@
                     $('#stat-products').html(count);
                 }
             })
-            .catch(err => {
-                $('#count-products').html('Err');
-                $('#stat-products').html('Err');
-            });
+            .catch(err => console.error(err));
 
         // 3. Fetch Customers
         fetch(`${API_URL}/customers`)
@@ -246,10 +285,76 @@
                     $('#stat-customers').html(count);
                 }
             })
-            .catch(err => {
-                $('#count-customers').html('Err');
-                $('#stat-customers').html('Err');
-            });
+            .catch(err => console.error(err));
+    }
+
+    // ===================================================================
+    // SALES CHART LOADER
+    // ===================================================================
+    function loadSalesChart() {
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+
+        // Fetch Sales Report for Today
+        $.get(`${API_URL}/sales`, { start_date: today, end_date: today }, function(res) {
+            if(res.status === 'success') {
+                const summary = res.summary;
+                const topProducts = res.top_products;
+
+                // Update Sales Summary Card
+                $('#count-sales').html('₱' + parseFloat(summary.total_revenue || 0).toFixed(2));
+                $('#stat-transactions').html(summary.total_transactions || 0);
+
+                // Prepare Data for Chart (Top 5 Products)
+                // We take only top 5 to keep the chart readable
+                const chartData = topProducts.slice(0, 5); 
+                
+                const labels = chartData.map(p => p.product_name);
+                const dataValues = chartData.map(p => parseFloat(p.total_sales));
+
+                // Initialize Chart.js
+                const ctx = document.getElementById('salesBarChart').getContext('2d');
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Sales Revenue (₱)',
+                            backgroundColor: '#007bff',
+                            borderColor: '#0056b3',
+                            data: dataValues,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error("Sales API Error:", res.message);
+            }
+        }).fail(function() {
+            console.error("Failed to load sales data.");
+        });
     }
 </script>
 </body>

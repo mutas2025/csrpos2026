@@ -13,15 +13,52 @@
     <link rel="icon" type="image/png" sizes="40x16" href="dist/img/splogo.png">
     
     <style>
+        /* =================================================================
+           1. BODY & BACKGROUND IMAGE STYLING
+           ================================================================= */
         body {
             font-family: "Asap", sans-serif;
-            background-color: #6c757d !important; /* Using the grey background from your code */
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
         }
 
-        /* Centered Login Card Styling */
+        /* The Background Image */
+        #bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Replace this URL with your local image path, e.g., 'dist/img/bg-city.jpg' */
+            background-image: url('bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -2;
+        }
+
+        /* Dark Overlay for readability */
+        #bg-overlay::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* 50% Black Opacity */
+            z-index: -1;
+        }
+
+        /* =================================================================
+           2. LOGIN CARD STYLING
+           ================================================================= */
         .login {
             overflow: hidden;
-            background: white;
+            background: rgba(255, 255, 255, 0.95); /* Slight transparency for glass effect */
             padding: 40px 30px 30px 30px;
             border-radius: 10px;
             position: absolute;
@@ -36,9 +73,11 @@
             -webkit-transition: -webkit-transform 300ms, box-shadow 300ms;
             -moz-transition: -moz-transform 300ms, box-shadow 300ms;
             transition: transform 300ms, box-shadow 300ms;
-            box-shadow: 5px 10px 10px rgba(2, 128, 144, 0.2);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.3); /* Enhanced shadow for contrast */
+            z-index: 100;
         }
 
+        /* Decorative Background Circles (Animated) */
         .login::before,
         .login::after {
             content: "";
@@ -70,22 +109,26 @@
             animation: wawes 7s infinite;
         }
 
+        /* Input Styling */
         .login > input {
             font-family: "Asap", sans-serif;
             display: block;
             border-radius: 5px;
             font-size: 16px;
-            background: white;
+            background: #f8f9fa; /* Light grey background for inputs */
             width: 100%;
-            border: 0;
-            padding: 10px 10px;
-            margin: 15px -10px;
-            border-bottom: 1px solid #ddd; /* Slight border for visibility */
+            border: 1px solid #ced4da;
+            padding: 12px 15px;
+            margin: 15px 0;
+            box-sizing: border-box;
+            transition: all 0.3s;
         }
 
         .login > input:focus {
             outline: none;
-            border-bottom: 1px solid #028090;
+            border-color: #028090;
+            background: white;
+            box-shadow: 0 0 0 2px rgba(2, 128, 144, 0.2);
         }
 
         /* Button Styling */
@@ -101,7 +144,7 @@
             margin-top: 10px;
             margin-left: -5px;
             border-radius: 5px;
-            background-color: grey;
+            background-color: #6c757d; /* Matching AdminLTE grey/dark */
             -webkit-transition: background-color 300ms;
             -moz-transition: background-color 300ms;
             transition: background-color 300ms;
@@ -111,19 +154,21 @@
             background-color: #f24353;
         }
 
-        /* Register Link Styling (Text side-by-side with button) */
+        /* Register Link Styling */
         .register-link {
             display: inline-block;
             margin-left: 15px;
             font-size: 14px;
-            color: #007bff;
+            color: #fff; /* White text for contrast against dark bg */
             text-decoration: none;
             position: relative;
-            top: -2px; /* Align with button */
+            top: -2px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         .register-link:hover {
-            color: #0056b3;
+            color: #ddd;
             text-decoration: underline;
         }
 
@@ -155,12 +200,14 @@
             }
         }
 
+        /* Text Elements */
         center {
             font-size: 25px;
             z-index: 99 !important;
             display: block;
-            color: black;
+            color: #333;
             margin-bottom: 10px;
+            font-weight: bold;
         }
 
         /* Logo styling */
@@ -170,10 +217,19 @@
             position: absolute;
             right: 20px;
             bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .profile-user-img {
+            width: 100px;
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body class="hold-transition login-page">
+
+    <!-- NEW: Background Image Overlay -->
+    <div id="bg-overlay"></div>
 
     <!-- Login Box -->
     <div class="login-box bg-secondary card">
@@ -185,12 +241,12 @@
             </div>
             <center>Sample Login</center>
 
-            <input type="text" id="username" name="username" placeholder="Username or Email" required>
+            <input type="text" id="username" name="username" placeholder="Username or Email" required autocomplete="off">
             <input type="password" id="password" name="password" placeholder="Password" required>
 
             <!-- Login Button and Register Text Side by Side -->
             <button type="submit" id="submit_login">Login</button>
-            <a href="registration.php" class="register-link">Register</a>
+            <a href="pages/home/register.php" class="register-link">Register</a>
 
             <img class="profile-user-img img-fluid border-0 img-logo"
                  src="dist/img/itcsologo.png"

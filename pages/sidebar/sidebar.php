@@ -1,8 +1,9 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-
-  <a class="brand-link user-panel pb-3 mb-3 d-flex">
-    <img src="../../dist/img/itcsologo.webp" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-    <span class="brand-text font-weight-light text-lg">CLEAN COPY</span>
+  
+  <!-- Brand Logo -->
+  <a href="home.php" class="brand-link user-panel pb-3 mb-3 d-flex">
+    <img src="../../dist/img/itcsologo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+    <span class="brand-text font-weight-light text-lg">POS System</span>
   </a>
 
   <!-- Sidebar -->
@@ -11,65 +12,85 @@
     <nav class="mt-2">
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         
-        <!-- Dashboard -->
-        <li id="statistics_sidebar" class="nav-item">
+        <!-- Dashboard (Standalone) -->
+        <li id="dashboard_sidebar" class="nav-item">
           <a href="home.php" class="nav-link">
             <i class="nav-icon fas fa-tachometer-alt"></i>
             <p>Dashboard</p>
           </a>
         </li>
 
-                <!-- Users Link -->
-        <li id="pos_sidebar" class="nav-item">
-          <a href="pos.php" class="nav-link">
-            <i class="nav-icon fas fa-shopping-cart"></i>
-            <p>POS</p>
+        <!-- Group: Operations (POS, Transactions, Sales) -->
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-cogs"></i>
+            <p>
+              Operations
+              <i class="right fas fa-angle-left"></i>
+            </p>
           </a>
-        </li>
-        
-        <!-- Products Link -->
-        <li id="products_sidebar" class="nav-item">
-          <a href="productlist.php" class="nav-link">
-            <i class="nav-icon fas fa-box"></i>
-            <p>Products</p>
-          </a>
-        </li>
-
-        <!-- Customer Link -->
-        <li id="customers_sidebar" class="nav-item">
-          <a href="customerlist.php" class="nav-link">
-            <i class="nav-icon fas fa-id-card"></i>
-            <p>Customers</p>
-          </a>
-        </li>
-
-                <li id="customers_sidebar" class="nav-item">
-          <a href="transaction.php" class="nav-link">
-            <i class="nav-icon fas fa-exchange-alt"></i>
-            <p>Transactions</p>
-          </a>
-        </li>
-
-                <li id="customers_sidebar" class="nav-item">
-          <a href="sales.php" class="nav-link">
-            <i class="nav-icon fas fa-chart-line"></i>
-            <p>Sales</p>
-          </a>
+          <ul class="nav nav-treeview">
+            <li id="pos_sidebar" class="nav-item">
+              <a href="pos.php" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>POS System</p>
+              </a>
+            </li>
+            <li id="transactions_sidebar" class="nav-item">
+              <a href="transaction.php" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Transactions</p>
+              </a>
+            </li>
+            <li id="sales_sidebar" class="nav-item">
+              <a href="sales.php" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Sales Report</p>
+              </a>
+            </li>
+          </ul>
         </li>
 
-                <!-- Users Link -->
+        <!-- Group: Inventory (Products, Customers) -->
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon fas fa-boxes"></i>
+            <p>
+              Inventory & CRM
+              <i class="right fas fa-angle-left"></i>
+            </p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li id="products_sidebar" class="nav-item">
+              <a href="productlist.php" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Products</p>
+              </a>
+            </li>
+            <li id="customers_sidebar" class="nav-item">
+              <a href="customerlist.php" class="nav-link">
+                <i class="far fa-circle nav-icon"></i>
+                <p>Customers</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Settings / Users -->
         <li id="users_sidebar" class="nav-item">
           <a href="users.php" class="nav-link">
-            <i class="nav-icon fas fa-user"></i>
-            <p>Users</p>
+            <i class="nav-icon fas fa-users-cog"></i>
+            <p>User Management</p>
           </a>
         </li>
 
-        <!-- Logout -->
-        <li class="nav-item">
+        <!-- Logout Divider -->
+        <li class="nav-header">ACCOUNT</li>
+        
+        <li id="logout_sidebar" class="nav-item">
           <a href="logout.php" class="nav-link">
-            <i class="nav-icon fas fa-sign-out-alt"></i>
-            <p>Logout</p>
+            <i class="nav-icon fas fa-sign-out-alt text-danger"></i>
+            <p class="text-danger">Logout</p>
           </a>
         </li>
 
@@ -79,26 +100,3 @@
   <!-- /.sidebar -->
 
 </aside>
-
-<!-- JAVASCRIPT TO HANDLE ACTIVE STATE (Place this at the bottom of the page or in your main script file) -->
-<script>
-  $(function() {
-    // Get current page filename
-    var path = window.location.pathname;
-    var page = path.split("/").pop();
-
-    // Remove all active classes first
-    $('.nav-link').removeClass('active');
-
-    // Apply active class based on current page
-    if (page === 'home.php') {
-      $('#statistics_sidebar .nav-link').addClass('active');
-    } else if (page === 'users.php') {
-      $('#users_sidebar .nav-link').addClass('active');
-    } else if (page === 'productlist.php') {
-      $('#products_sidebar .nav-link').addClass('active');
-    } else if (page === 'customerlist.php') {
-      $('#customers_sidebar .nav-link').addClass('active');
-    }
-  });
-</script>
