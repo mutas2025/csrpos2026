@@ -1,6 +1,6 @@
 <?php
 // users.php
-// Display page for User Management
+// Display page for User Management - Split View Layout
 ?>
 
 <!DOCTYPE html>
@@ -10,8 +10,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>User Management</title>
-    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
+
     <!-- Google Font: Source Sans Pro -->
+    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <link rel="stylesheet" href="../../dist/css/font.css">
     <!-- DataTables & Bootstrap 4 -->
     <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
@@ -25,28 +26,121 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
     
     <style>
+        /* Fix layout height */
         .content-wrapper { min-height: 100vh; }
-        table.dataTable thead th { background-color: #343a40; color: white; }
-        .dropdown-menu { min-width: 10rem; }
         
-        /* Status Badges */
-        .badge-approved { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; }
-        .badge-disapproved { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; }
-        .badge-pending { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; }
-        
-        /* Modal styles */
-        .modal-lg { max-width: 800px; }
-        
-        .view-table td {
-            padding: 8px;
-            border-bottom: 1px solid #dee2e6;
+        /* Custom Split View Styling */
+        .split-container {
+            display: flex;
+            height: calc(100vh - 120px);
+            gap: 20px;
+            padding: 10px;
         }
         
-        .view-table th {
-            padding: 8px;
-            border-bottom: 1px solid #dee2e6;
-            background-color: #f8f9fa;
-            width: 35%;
+        .form-panel {
+            flex: 0 0 400px; /* Slightly wider for User form */
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        
+        .form-panel-header {
+            padding: 15px 20px;
+            background-color: #343a40;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .form-panel-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        .table-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        
+        .table-panel-header {
+            padding: 15px 20px;
+            background-color: #343a40;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .table-panel-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        /* Inline Form Adjustments */
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: #495057;
+        }
+        
+        .form-control:focus, .custom-select:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .form-control-sm, .custom-select-sm {
+            font-size: 0.875rem;
+        }
+        
+        /* Status Badges */
+        .badge-approved { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.8rem; white-space: nowrap; }
+        .badge-disapproved { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.8rem; white-space: nowrap; }
+        .badge-pending { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; font-size: 0.8rem; white-space: nowrap; }
+        
+        /* DataTable Specifics */
+        table.dataTable thead th { background-color: #f8f9fa; color: #343a40; border-bottom: 2px solid #dee2e6; font-size: 0.8rem; }
+        table.dataTable tbody td { font-size: 0.85rem; vertical-align: middle; padding: 8px; }
+        .dataTables_wrapper .dataTables_filter input { margin-left: 0; }
+        
+        /* Action Buttons */
+        .btn-action {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .split-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .form-panel {
+                flex: none;
+            }
         }
     </style>
 </head>
@@ -77,7 +171,7 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">User Management</h1>
+                        <h1 class="m-0 text-dark">User Management</h1>
                     </div>
                 </div>
             </div>
@@ -85,196 +179,115 @@
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">List of Users</h3>
-                                <div class="card-tools">
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="openAddModal()">
-                                        <i class="fas fa-plus"></i> Add User
+                <div class="split-container">
+                    
+                    <!-- LEFT PANEL: INLINE FORM -->
+                    <div class="form-panel">
+                        <div class="form-panel-header">
+                            <h5 class="mb-0 font-weight-bold"><i class="fas fa-user-shield mr-2"></i><span id="formTitle">Add New User</span></h5>
+                            <button type="button" class="btn btn-sm btn-light" id="btnReset" onclick="resetForm()" title="Clear Form">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
+                        </div>
+                        <div class="form-panel-body">
+                            <form id="userForm" autocomplete="off">
+                                <input type="hidden" name="objid" id="user_objid">
+                                
+                                <div class="form-group">
+                                    <label>ID No. <span class="text-danger">*</span></label>
+                                    <input type="text" name="idno" id="user_idno" class="form-control form-control-sm" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="fullname" id="user_fullname" class="form-control form-control-sm" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Username <span class="text-danger">*</span></label>
+                                    <input type="text" name="username" id="user_username" class="form-control form-control-sm" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" id="user_email" class="form-control form-control-sm" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Contact No. <span class="text-danger">*</span></label>
+                                    <input type="text" name="contactno" id="user_contactno" class="form-control form-control-sm" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Department <span class="text-danger">*</span></label>
+                                    <input type="text" name="department" id="user_department" class="form-control form-control-sm" required>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label>Type <span class="text-danger">*</span></label>
+                                            <select name="user_type" id="user_user_type" class="form-control form-control-sm custom-select-sm" required>
+                                                <option value="admin">Admin</option>
+                                                <option value="manager">Manager</option>
+                                                <option value="cashier">Cashier</option>
+                                                <option value="staff">Staff</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label>Status</label>
+                                            <select name="status" id="user_status" class="form-control form-control-sm custom-select-sm">
+                                                <option value="APPROVED">APPROVED</option>
+                                                <option value="DISAPPROVED">DISAPPROVED</option>
+                                                <option value="PENDING">PENDING</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Password <span class="text-danger" id="passwordRequired">*</span></label>
+                                    <input type="password" name="password" id="user_password" class="form-control form-control-sm">
+                                    <small class="text-muted" style="font-size: 0.75rem;" id="passwordHint">Required for new users.</small>
+                                </div>
+
+                                <div class="mt-4 d-flex">
+                                    <button type="submit" class="btn btn-primary btn-block btn-sm" id="btnSubmit">
+                                        <i class="fas fa-save mr-1"></i> Save User
                                     </button>
                                 </div>
-                            </div>
-                            <div class="card-body">
-                                <table id="users-table" class="table table-bordered table-striped table-hover">
-                                    <thead>
-                                            <th>ID No.</th>
-                                            <th>Full Name</th>
-                                            <th>Username</th>
-                                            <th>Email</th>
-                                            <th>Department</th>
-                                            <th>Type</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
+                            </form>
                         </div>
                     </div>
+
+                    <!-- RIGHT PANEL: DATA TABLE -->
+                    <div class="table-panel">
+                        <div class="table-panel-header">
+                            <h5 class="mb-0 font-weight-bold"><i class="fas fa-users-cog mr-2"></i>User List</h5>
+                            <span class="badge badge-light" id="totalCount">0 Users</span>
+                        </div>
+                        <div class="table-panel-body">
+                            <table id="users-table" class="table table-bordered table-hover mb-0" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>ID No.</th>
+                                        <th>Full Name</th>
+                                        <th>Username</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th class="text-center" style="width: 110px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
-    </div>
-
-    <!-- Modal for Add / Update User -->
-    <div class="modal fade" id="userModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Add User</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="userForm">
-                    <div class="modal-body">
-                        <input type="hidden" name="objid" id="user_objid">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>ID No. <span class="text-danger">*</span></label>
-                                    <input type="text" name="idno" id="user_idno" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Full Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="fullname" id="user_fullname" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Username <span class="text-danger">*</span></label>
-                                    <input type="text" name="username" id="user_username" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Email <span class="text-danger">*</span></label>
-                                    <input type="email" name="email" id="user_email" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Contact No. <span class="text-danger">*</span></label>
-                                    <input type="text" name="contactno" id="user_contactno" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Department <span class="text-danger">*</span></label>
-                                    <input type="text" name="department" id="user_department" class="form-control" required>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>User Type <span class="text-danger">*</span></label>
-                                    <select name="user_type" id="user_user_type" class="form-control" required>
-                                        <option value="admin">Admin</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="cashier">Cashier</option>
-                                        <option value="staff">Staff</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Status</label>
-                                    <select name="status" id="user_status" class="form-control">
-                                        <option value="APPROVED">APPROVED</option>
-                                        <option value="DISAPPROVED">DISAPPROVED</option>
-                                        <option value="PENDING">PENDING</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group" id="passwordGroup">
-                            <label>Password <span class="text-danger" id="passwordRequired">*</span></label>
-                            <input type="password" name="password" id="user_password" class="form-control">
-                            <small class="text-muted" id="passwordHint">Leave blank to keep current password when editing.</small>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for View User (Read Only) -->
-    <div class="modal fade" id="viewModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-info">
-                    <h5 class="modal-title text-white">User Details</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <table class="table table-borderless view-table">
-                        <tr>
-                            <th>ID No.</th>
-                            <td id="v_idno">-</td>
-                        </tr>
-                        <tr>
-                            <th>Full Name</th>
-                            <td id="v_fullname">-</td>
-                        </tr>
-                        <tr>
-                            <th>Username</th>
-                            <td id="v_username">-</td>
-                        </tr>
-                        <tr>
-                            <th>Email</th>
-                            <td id="v_email">-</td>
-                        </tr>
-                        <tr>
-                            <th>Contact No.</th>
-                            <td id="v_contactno">-</td>
-                        </tr>
-                        <tr>
-                            <th>Department</th>
-                            <td id="v_department">-</td>
-                        </tr>
-                        <tr>
-                            <th>User Type</th>
-                            <td id="v_user_type">-</td>
-                        </tr>
-                        <tr>
-                            <th>Status</th>
-                            <td id="v_status">-</td>
-                        </tr>
-                        <tr>
-                            <th>Created At</th>
-                            <td id="v_created_at">-</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <!-- ADDED EDIT BUTTON HERE -->
-                    <button type="button" class="btn btn-warning" id="editFromViewBtn">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
 </div>
@@ -282,64 +295,71 @@
 <!-- REQUIRED SCRIPTS -->
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- DataTables -->
+
+<!-- DataTables & Plugins -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
 <script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
 <script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-<script src="../../plugins/jszip/jszip.min.js"></script>
-<script src="../../plugins/pdfmake/pdfmake.min.js"></script>
-<script src="../../plugins/pdfmake/vfs_fonts.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
-<!-- AdminLTE & SweetAlert2 -->
+
+<!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
+<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
 
 <script>
  $(document).ready(function() {
-    // ------------------------------------------------------------------
-    // CONFIGURATION
-    // ------------------------------------------------------------------
     const API_URL = '../../api/routes.php';
-    var usersData = []; // Store users data globally for easy access
+    var usersData = []; // Store users data globally
     var table;
 
-    // ------------------------------------------------------------------
-    // INITIALIZATION
-    // ------------------------------------------------------------------
+    // Helper function to get user data by ID
+    function getUserDataById(objid) {
+        return usersData.find(user => user.objid == objid);
+    }
+
+    // Initialize DataTable
     function initializeDataTable() {
         table = $('#users-table').DataTable({
             "responsive": true,
-            "lengthChange": true,
+            "lengthChange": false,
             "autoWidth": false,
-            "pageLength": 10,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"],
+            "pageLength": 15,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "dom": '<"row mb-2"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"f>>rt<"row mt-2"<"col-sm-12 col-md-5"l><"col-sm-12 col-md-7"p>>',
+            "language": {
+                "search": "<div class='input-group input-group-sm'><div class='input-group-prepend'><span class='input-group-text'><i class='fas fa-search'></i></span></div>",
+                "searchPlaceholder": "Search users...",
+            },
             "ajax": {
                 "url": API_URL + "/users",
                 "type": "GET",
                 "dataSrc": function(json) {
                     if (json.status === 'success') {
                         usersData = json.data; // Store data globally
+                        updateTotalCount(json.data.length);
                         return json.data;
                     } else {
-                        Swal.fire("Error", json.message, "error");
+                        console.error("API returned error:", json.message);
+                        Swal.fire("Error", json.message, "error"); 
                         return [];
                     }
+                },
+                "error": function (xhr, error, thrown) {
+                    console.error("AJAX Error:", error, thrown);
+                    Swal.fire("Connection Error", "Could not connect to API.", "error");
                 }
             },
             "columns": [
-                { "data": "idno" },
-                { "data": "fullname" },
-                { "data": "username" },
-                { "data": "email" },
-                { "data": "department" },
-                { "data": "user_type" },
+                { "data": "idno", "className": "align-middle" },
+                { "data": "fullname", "className": "align-middle" },
+                { "data": "username", "className": "align-middle" },
+                { "data": "user_type", "className": "align-middle text-capitalize" },
                 { 
                     "data": "status",
+                    "className": "align-middle",
                     "render": function(data, type, row) {
                         var badgeClass = 'badge-pending';
                         var statusText = data || 'PENDING';
@@ -350,123 +370,65 @@
                 },
                 { 
                     "data": null,
+                    "className": "align-middle text-center",
                     "render": function(data, type, row) {
-                        // Build Action Dropdown
-                        var approveBtn = '';
-                        if(row.status !== 'APPROVED') {
-                            approveBtn = '<a class="dropdown-item" href="javascript:void(0)" onclick="approveUser(\'' + row.objid + '\')"><i class="fas fa-check-circle mr-2 text-success"></i>Approve</a>';
+                        // Edit Button
+                        var editBtn = `<button type="button" class="btn btn-warning btn-action" onclick="updateUser('${row.objid}')" title="Edit User"><i class="fas fa-pen"></i></button>`;
+                        
+                        // Quick Status Buttons (Toggle)
+                        var statusBtn = '';
+                        if(row.status === 'APPROVED') {
+                            statusBtn = `<button type="button" class="btn btn-danger btn-action" onclick="disapproveUser('${row.objid}')" title="Disapprove"><i class="fas fa-thumbs-down"></i></button>`;
+                        } else {
+                            statusBtn = `<button type="button" class="btn btn-success btn-action" onclick="approveUser('${row.objid}')" title="Approve"><i class="fas fa-thumbs-up"></i></button>`;
                         }
 
-                        var disapproveBtn = '';
-                        if(row.status !== 'DISAPPROVED') {
-                            disapproveBtn = '<a class="dropdown-item" href="javascript:void(0)" onclick="disapproveUser(\'' + row.objid + '\')"><i class="fas fa-times-circle mr-2 text-danger"></i>Disapprove</a>';
-                        }
+                        // Delete Button
+                        var deleteBtn = `<button type="button" class="btn btn-danger btn-action" onclick="deleteUser('${row.objid}')" title="Delete User"><i class="fas fa-trash"></i></button>`;
 
-                        // REMOVED UPDATE BUTTON FROM DROPDOWN
-                        return `
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Actions
-                            </button>
-                            <div class="dropdown-menu">
-                                ${approveBtn}
-                                ${disapproveBtn}
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="viewUser('${row.objid}')"><i class="fas fa-eye mr-2 text-info"></i>View</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="deleteUser('${row.objid}')"><i class="fas fa-trash mr-2 text-danger"></i>Delete</a>
-                            </div>
-                        </div>`;
+                        return `<div class="btn-group btn-group-sm">${editBtn}${statusBtn}${deleteBtn}</div>`;
                     },
                     "orderable": false,
                     "searchable": false
                 }
             ]
         });
-        
-        // Add buttons after table is initialized
-        table.buttons().container().appendTo('#users-table_wrapper .col-md-6:eq(0)');
+    }
+
+    function updateTotalCount(count) {
+        $('#totalCount').text(count + ' Users');
     }
 
     // Initialize DataTable
     initializeDataTable();
 
-    // Helper function to get user data by ID
-    function getUserDataById(objid) {
-        return usersData.find(user => user.objid == objid);
-    }
-
     // ------------------------------------------------------------------
-    // 1. ADD USER
+    // RESET FORM
     // ------------------------------------------------------------------
-    window.openAddModal = function() {
-        $('#modalTitle').text('Add New User');
+    window.resetForm = function() {
         $('#userForm')[0].reset();
         $('#user_objid').val('');
+        $('#formTitle').text('Add New User');
+        $('#btnSubmit').html('<i class="fas fa-save mr-1"></i> Save User');
+        $('#btnSubmit').removeClass('btn-warning').addClass('btn-primary');
+        
+        // Reset Password fields
         $('#user_password').prop('required', true);
         $('#passwordRequired').show();
-        $('#passwordHint').text('Password is required for new users.');
+        $('#passwordHint').text('Required for new users.');
         $('#user_password').val('');
-        $('#user_status').val('APPROVED');
-        $('#userModal').modal({
-            backdrop: 'static',
-            keyboard: false
-        });
-        $('#userModal').modal('show');
     }
 
     // ------------------------------------------------------------------
-    // 2. VIEW USER
-    // ------------------------------------------------------------------
-    window.viewUser = function(objid) {
-        var userData = getUserDataById(objid);
-        
-        if(userData) {
-            // Populate the View Modal fields
-            $('#v_idno').text(userData.idno || 'N/A');
-            $('#v_fullname').text(userData.fullname || 'N/A');
-            $('#v_username').text(userData.username || 'N/A');
-            $('#v_email').text(userData.email || 'N/A');
-            $('#v_contactno').text(userData.contactno || 'N/A');
-            $('#v_department').text(userData.department || 'N/A');
-            
-            var userTypeText = userData.user_type ? userData.user_type.charAt(0).toUpperCase() + userData.user_type.slice(1) : 'N/A';
-            $('#v_user_type').text(userTypeText);
-            
-            var statusText = userData.status || 'N/A';
-            var statusHtml = '';
-            if(statusText === 'APPROVED') {
-                statusHtml = '<span class="badge-approved">' + statusText + '</span>';
-            } else if(statusText === 'DISAPPROVED') {
-                statusHtml = '<span class="badge-disapproved">' + statusText + '</span>';
-            } else {
-                statusHtml = '<span class="badge-pending">' + statusText + '</span>';
-            }
-            $('#v_status').html(statusHtml);
-            $('#v_created_at').text(userData.created_at || 'N/A');
-            
-            // Store the ID on the Edit button for reference
-            $('#editFromViewBtn').data('objid', objid);
-            
-            // Show the modal
-            $('#viewModal').modal('show');
-        } else {
-            Swal.fire("Error", "Could not retrieve user data.", "error");
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // 3. UPDATE USER (Logic to populate form)
+    // UPDATE USER (Populate Form)
     // ------------------------------------------------------------------
     window.updateUser = function(objid) {
         var userData = getUserDataById(objid);
         
         if(userData) {
-            $('#modalTitle').text('Update User');
-            $('#user_password').prop('required', false);
-            $('#passwordRequired').hide();
-            $('#passwordHint').text('Leave blank to keep current password.');
-            $('#user_password').val('');
+            $('#formTitle').text('Update User');
+            $('#btnSubmit').html('<i class="fas fa-check mr-1"></i> Update User');
+            $('#btnSubmit').removeClass('btn-primary').addClass('btn-warning');
             
             // Populate the Form fields
             $('#user_objid').val(userData.objid);
@@ -484,32 +446,21 @@
             // Set Status dropdown
             $('#user_status').val(userData.status);
             
-            // Show the modal
-            $('#userModal').modal({
-                backdrop: 'static',
-                keyboard: false
-            });
-            $('#userModal').modal('show');
+            // Handle Password Field
+            $('#user_password').val(''); // Clear password field
+            $('#user_password').prop('required', false);
+            $('#passwordRequired').hide();
+            $('#passwordHint').text('Leave blank to keep current password.');
+            
+            // Scroll to top of form on mobile
+            $('.form-panel').scrollTop(0);
         } else {
-            Swal.fire("Error", "Could not retrieve user data for update.", "error");
+            Swal.fire("Error", "Could not retrieve user data.", "error");
         }
     }
 
     // ------------------------------------------------------------------
-    // EDIT BUTTON CLICK HANDLER (Inside View Modal)
-    // ------------------------------------------------------------------
-    $('#editFromViewBtn').on('click', function() {
-        var objid = $(this).data('objid');
-        $('#viewModal').modal('hide'); // Hide the View Modal
-        
-        // Small delay to allow modal transition
-        setTimeout(function() {
-            updateUser(objid); // Open the Edit Modal
-        }, 300);
-    });
-
-    // ------------------------------------------------------------------
-    // 4. APPROVE USER
+    // APPROVE USER
     // ------------------------------------------------------------------
     window.approveUser = function(objid) {
         Swal.fire({
@@ -517,15 +468,23 @@
             text: "This will set the user status to APPROVED.",
             icon: 'question',
             showCancelButton: true,
+            confirmButtonColor: '#28a745',
             confirmButtonText: 'Yes, approve it!'
         }).then((result) => {
             if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                
                 $.ajax({
                     url: API_URL + '/users/status/' + objid, 
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify({ status: 'APPROVED' }),
                     success: function(res) {
+                        Swal.close();
                         if(res.status === 'success') {
                             Swal.fire('Approved!', res.message, 'success');
                             table.ajax.reload(null, false);
@@ -534,7 +493,8 @@
                         }
                     },
                     error: function(xhr) {
-                        Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
+                        Swal.close();
+                        Swal.fire('Error!', 'Server communication error.', 'error');
                     }
                 });
             }
@@ -542,7 +502,7 @@
     }
 
     // ------------------------------------------------------------------
-    // 5. DISAPPROVE USER
+    // DISAPPROVE USER
     // ------------------------------------------------------------------
     window.disapproveUser = function(objid) {
         Swal.fire({
@@ -550,15 +510,23 @@
             text: "This will set the user status to DISAPPROVED.",
             icon: 'warning',
             showCancelButton: true,
+            confirmButtonColor: '#dc3545',
             confirmButtonText: 'Yes, disapprove it!'
         }).then((result) => {
             if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                
                 $.ajax({
                     url: API_URL + '/users/status/' + objid, 
                     type: 'PUT',
                     contentType: 'application/json',
                     data: JSON.stringify({ status: 'DISAPPROVED' }),
                     success: function(res) {
+                        Swal.close();
                         if(res.status === 'success') {
                             Swal.fire('Disapproved!', res.message, 'success');
                             table.ajax.reload(null, false);
@@ -567,7 +535,8 @@
                         }
                     },
                     error: function(xhr) {
-                        Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
+                        Swal.close();
+                        Swal.fire('Error!', 'Server communication error.', 'error');
                     }
                 });
             }
@@ -575,7 +544,7 @@
     }
 
     // ------------------------------------------------------------------
-    // 6. DELETE USER
+    // DELETE USER
     // ------------------------------------------------------------------
     window.deleteUser = function(objid) {
         Swal.fire({
@@ -583,22 +552,35 @@
             text: "You won't be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
+            confirmButtonColor: '#dc3545',
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Deleting...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                
                 $.ajax({
                     url: API_URL + '/users/' + objid,
                     type: 'DELETE',
                     success: function(res) {
+                        Swal.close();
                         if(res.status === 'success') {
                             Swal.fire('Deleted!', res.message, 'success');
+                            // If the deleted user was being edited, reset the form
+                            if($('#user_objid').val() == objid) {
+                                resetForm();
+                            }
                             table.ajax.reload(null, false);
                         } else {
                             Swal.fire('Error!', res.message, 'error');
                         }
                     },
                     error: function(xhr) {
-                        Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
+                        Swal.close();
+                        Swal.fire('Error!', 'Server communication error.', 'error');
                     }
                 });
             }
@@ -664,14 +646,10 @@
             url = API_URL + '/users/' + payload.objid;
         }
 
-        // Show loading indicator
         Swal.fire({
-            title: 'Processing...',
-            text: 'Please wait',
+            title: isUpdate ? 'Updating...' : 'Saving...',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => Swal.showLoading()
         });
 
         $.ajax({
@@ -682,8 +660,15 @@
             success: function(res) {
                 Swal.close();
                 if(res.status === 'success') {
-                    Swal.fire('Success!', res.message, 'success');
-                    $('#userModal').modal('hide');
+                    Swal.fire({
+                        icon: 'success',
+                        title: isUpdate ? 'Updated!' : 'Saved!',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    resetForm();
                     table.ajax.reload(null, false);
                 } else {
                     Swal.fire('Error!', res.message, 'error');
@@ -698,15 +683,6 @@
                 Swal.fire('Error!', errorMsg, 'error');
             }
         });
-    });
-    
-    // Clear modal when closed
-    $('#userModal').on('hidden.bs.modal', function () {
-        $('#userForm')[0].reset();
-        $('#user_objid').val('');
-        $('#user_password').prop('required', true);
-        $('#passwordRequired').show();
-        $('#passwordHint').text('Password is required for new users.');
     });
 });
 </script>

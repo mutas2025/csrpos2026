@@ -1,6 +1,6 @@
 <?php
 // pos.php
-// Point of Sale Interface - Updated with Product Code / Name Search
+// Point of Sale Interface - Updated with Product Code / Name Search & 5-Column Grid
 ?>
 
 <!DOCTYPE html>
@@ -39,6 +39,11 @@
             border-radius: 5px;
             margin-bottom: 15px;
             background: #fff;
+            height: 100%; /* Ensure cards stretch to equal height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         .product-card:hover {
             transform: translateY(-3px);
@@ -48,6 +53,7 @@
         .product-card .card-body {
             padding: 10px;
             text-align: center;
+            width: 100%;
         }
         .product-price {
             font-size: 1.1rem;
@@ -137,6 +143,27 @@
             color: #007bff;
             float: right;
         }
+
+        /* 5 Column Grid Logic */
+        .col-5-cols {
+            position: relative;
+            width: 100%;
+            padding-right: 5px;
+            padding-left: 5px;
+            flex: 0 0 20%; /* 100% / 5 = 20% */
+            max-width: 20%;
+        }
+
+        /* Responsive adjustments for the 5-column grid */
+        @media (max-width: 1200px) {
+            .col-5-cols { flex: 0 0 25%; max-width: 25%; } /* 4 columns on smaller desktops */
+        }
+        @media (max-width: 992px) {
+            .col-5-cols { flex: 0 0 33.333333%; max-width: 33.333333%; } /* 3 columns on tablets */
+        }
+        @media (max-width: 576px) {
+            .col-5-cols { flex: 0 0 50%; max-width: 50%; } /* 2 columns on mobile */
+        }
     </style>
 </head>
 
@@ -208,7 +235,7 @@
                         <div class="cart-container">
                             <h4 class="mb-3"><i class="fas fa-shopping-cart"></i> Current Order</h4>
                             
-                            <!-- NEW: Quick Add Section -->
+                            <!-- Quick Add Section -->
                             <div class="quick-add-section">
                                 <label class="small text-muted">Quick Add (Code or Name)</label>
                                 <div class="input-group mb-1">
@@ -384,7 +411,7 @@
         });
     }
 
-    // 2. Render Products (Grid View)
+    // 2. Render Products (Grid View - 5 Columns)
     function renderProducts(data) {
         const grid = $('#productGrid');
         grid.empty();
@@ -396,7 +423,7 @@
 
         data.forEach(prod => {
             let card = `
-                <div class="col-md-4 col-sm-6">
+                <div class="col-5-cols">
                     <div class="product-card" onclick="addToCart(${prod.objid})">
                         <div class="card-body">
                             <h6 class="font-weight-bold text-truncate" title="${prod.product_name}">${prod.product_name}</h6>

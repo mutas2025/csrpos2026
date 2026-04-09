@@ -1,6 +1,6 @@
 <?php
 // productlist.php
-// Display page for Product Management
+// Display page for Product Management - Split View Layout
 ?>
 
 <!DOCTYPE html>
@@ -26,52 +26,117 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
     
     <style>
+        /* Fix layout height */
         .content-wrapper { min-height: 100vh; }
-        table.dataTable thead th { background-color: #343a40; color: white; }
-        .dropdown-menu { min-width: 8rem; }
+        
+        /* Custom Split View Styling */
+        .split-container {
+            display: flex;
+            height: calc(100vh - 120px);
+            gap: 20px;
+            padding: 10px;
+        }
+        
+        .form-panel {
+            flex: 0 0 380px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        
+        .form-panel-header {
+            padding: 15px 20px;
+            background-color: #343a40;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .form-panel-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        .table-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        
+        .table-panel-header {
+            padding: 15px 20px;
+            background-color: #343a40;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .table-panel-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        /* Inline Form Adjustments */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
         
         /* Status Badges */
-        .badge-in-stock { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.85rem; }
-        .badge-low-stock { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; font-size: 0.85rem; }
-        .badge-out-of-stock { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.85rem; }
+        .badge-in-stock { background-color: #28a745; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.8rem; white-space: nowrap; }
+        .badge-low-stock { background-color: #ffc107; color: black; padding: 5px 10px; border-radius: 3px; font-size: 0.8rem; white-space: nowrap; }
+        .badge-out-of-stock { background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 3px; font-size: 0.8rem; white-space: nowrap; }
         
-        /* View Modal Styles */
-        .view-table td {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
+        /* DataTable Specifics */
+        table.dataTable thead th { background-color: #f8f9fa; color: #343a40; border-bottom: 2px solid #dee2e6; font-size: 0.875rem; }
+        table.dataTable tbody td { font-size: 0.875rem; vertical-align: middle; }
+        .dataTables_wrapper .dataTables_filter input { margin-left: 0; }
+        
+        /* Action Buttons */
+        .btn-action {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            margin: 0 2px;
         }
         
-        .view-table th {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            background-color: #f8f9fa;
-            width: 35%;
-            font-weight: 600;
-        }
-        
-        .product-image-placeholder {
-            text-align: center;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        
-        .product-image-placeholder i {
-            font-size: 80px;
-            color: #6c757d;
-        }
-        
-        .price-tag {
-            font-size: 20px;
-            font-weight: bold;
-            color: #28a745;
-        }
-        
-        .stock-indicator {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-weight: bold;
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .split-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .form-panel {
+                flex: none;
+            }
         }
     </style>
 </head>
@@ -102,7 +167,7 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Product Management</h1>
+                        <h1 class="m-0 text-dark">Product Management</h1>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
@@ -116,74 +181,33 @@
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">List of Products</h3>
-                                <div class="card-tools">
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="openAddModal()">
-                                        <i class="fas fa-plus"></i> Add Product
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <table id="products-table" class="table table-bordered table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Code</th>
-                                            <th>Product Name</th>
-                                            <th>Category</th>
-                                            <th>Price</th>
-                                            <th>Stock</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
+                <div class="split-container">
+                    
+                    <!-- LEFT PANEL: INLINE FORM -->
+                    <div class="form-panel">
+                        <div class="form-panel-header">
+                            <h5 class="mb-0 font-weight-bold"><i class="fas fa-cube mr-2"></i><span id="formTitle">Add New Product</span></h5>
+                            <button type="button" class="btn btn-sm btn-light" id="btnReset" onclick="resetForm()" title="Clear Form">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- Modal for Add/Edit Product -->
-    <div class="modal fade" id="productModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Add Product</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="productForm">
-                    <div class="modal-body">
-                        <input type="hidden" name="objid" id="prod_objid">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="form-panel-body">
+                            <form id="productForm" autocomplete="off">
+                                <input type="hidden" name="objid" id="prod_objid">
+                                
                                 <div class="form-group">
                                     <label>Product Code <span class="text-danger">*</span></label>
-                                    <input type="text" name="product_code" id="prod_code" class="form-control" required>
+                                    <input type="text" name="product_code" id="prod_code" class="form-control form-control-sm" placeholder="e.g., PRD-001" required>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
+
                                 <div class="form-group">
                                     <label>Product Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="product_name" id="prod_name" class="form-control" required>
+                                    <input type="text" name="product_name" id="prod_name" class="form-control form-control-sm" placeholder="Enter product name" required>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
+
                                 <div class="form-group">
                                     <label>Category <span class="text-danger">*</span></label>
-                                    <select name="category" id="prod_category" class="form-control" required>
+                                    <select name="category" id="prod_category" class="form-control form-control-sm" required>
                                         <option value="">Select Category</option>
                                         <option value="Electronics">Electronics</option>
                                         <option value="Clothing">Clothing</option>
@@ -193,92 +217,63 @@
                                         <option value="Other">Other</option>
                                     </select>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Price <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" name="price" id="prod_price" class="form-control" required min="0">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Stock Quantity <span class="text-danger">*</span></label>
-                                    <input type="number" name="stock" id="prod_stock" class="form-control" required min="0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal for View Product -->
-    <div class="modal fade" id="viewModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info">
-                    <h5 class="modal-title text-white">Product Details</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="product-image-placeholder">
-                                <i class="fas fa-box-open"></i>
-                                <h5 id="v_product_name" class="mt-2">-</h5>
-                                <p class="text-muted" id="v_product_code">-</p>
-                            </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label>Price <span class="text-danger">*</span></label>
+                                            <div class="input-group input-group-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">₱</span>
+                                                </div>
+                                                <input type="number" step="0.01" name="price" id="prod_price" class="form-control" placeholder="0.00" required min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label>Stock <span class="text-danger">*</span></label>
+                                            <input type="number" name="stock" id="prod_stock" class="form-control form-control-sm" placeholder="0" required min="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 d-flex">
+                                    <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">
+                                        <i class="fas fa-save mr-1"></i> Save Product
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="col-md-8">
-                            <table class="table table-borderless view-table">
-                                <tr>
-                                    <th>Product Code:</th>
-                                    <td id="v_code">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Product Name:</th>
-                                    <td id="v_name">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Category:</th>
-                                    <td id="v_category">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Price:</th>
-                                    <td id="v_price" class="price-tag">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Stock Quantity:</th>
-                                    <td id="v_stock">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Stock Status:</th>
-                                    <td id="v_stock_status">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Created At:</th>
-                                    <td id="v_created_at">-</td>
-                                </tr>
+                    </div>
+
+                    <!-- RIGHT PANEL: DATA TABLE -->
+                    <div class="table-panel">
+                        <div class="table-panel-header">
+                            <h5 class="mb-0 font-weight-bold"><i class="fas fa-list mr-2"></i>Product List</h5>
+                            <span class="badge badge-light" id="totalCount">0 Items</span>
+                        </div>
+                        <div class="table-panel-body">
+                            <table id="products-table" class="table table-bordered table-hover mb-0" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Product Name</th>
+                                        <th>Category</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th class="text-center" style="width: 100px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="editFromView()">Edit Product</button>
+
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
 </div>
@@ -292,14 +287,6 @@
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
 <script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
 <script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-<script src="../../plugins/jszip/jszip.min.js"></script>
-<script src="../../plugins/pdfmake/pdfmake.min.js"></script>
-<script src="../../plugins/pdfmake/vfs_fonts.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
@@ -307,10 +294,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
 
 <script>
-$(document).ready(function() {
+ $(document).ready(function() {
     const API_URL = '../../api/routes.php';
     var productsData = []; // Store products data globally
-    var currentViewProductId = null; // Store current viewed product ID
     var table;
 
     // Helper function to get product data by ID
@@ -321,9 +307,9 @@ $(document).ready(function() {
     // Helper function to get stock status badge
     function getStockStatusBadge(stock) {
         if(stock <= 0) {
-            return '<span class="badge-out-of-stock"><i class="fas fa-times-circle"></i> Out of Stock</span>';
+            return '<span class="badge-out-of-stock"><i class="fas fa-times-circle"></i> Out</span>';
         } else if(stock < 10) {
-            return '<span class="badge-low-stock"><i class="fas fa-exclamation-triangle"></i> Low Stock (' + stock + ')</span>';
+            return '<span class="badge-low-stock"><i class="fas fa-exclamation-triangle"></i> Low</span>';
         } else {
             return '<span class="badge-in-stock"><i class="fas fa-check-circle"></i> In Stock</span>';
         }
@@ -333,17 +319,24 @@ $(document).ready(function() {
     function initializeDataTable() {
         table = $('#products-table').DataTable({
             "responsive": true,
-            "lengthChange": true,
+            "lengthChange": false,
             "autoWidth": false,
-            "pageLength": 10,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"],
+            "pageLength": 15,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "dom": '<"row mb-2"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"f>>rt<"row mt-2"<"col-sm-12 col-md-5"l><"col-sm-12 col-md-7"p>>',
+            "language": {
+                "search": "<div class='input-group input-group-sm'><div class='input-group-prepend'><span class='input-group-text'><i class='fas fa-search'></i></span></div>",
+                "searchPlaceholder": "Search products...",
+            },
             "ajax": {
                 "url": API_URL + "/products",
                 "type": "GET",
                 "dataSrc": function(json) {
-                    console.log("API Response:", json);
                     if (json.status === 'success') {
                         productsData = json.data; // Store data globally
+                        updateTotalCount(json.data.length);
                         return json.data;
                     } else {
                         console.error("API returned error:", json.message);
@@ -353,15 +346,16 @@ $(document).ready(function() {
                 },
                 "error": function (xhr, error, thrown) {
                     console.error("AJAX Error:", error, thrown);
-                    Swal.fire("Connection Error", "Could not connect to API: " + API_URL, "error");
+                    Swal.fire("Connection Error", "Could not connect to API.", "error");
                 }
             },
             "columns": [
-                { "data": "product_code" },
-                { "data": "product_name" },
-                { "data": "category" },
+                { "data": "product_code", "className": "align-middle" },
+                { "data": "product_name", "className": "align-middle" },
+                { "data": "category", "className": "align-middle" },
                 { 
                     "data": "price",
+                    "className": "align-middle text-right",
                     "render": function(data, type, row) {
                         if(type === 'display') {
                             return '₱' + parseFloat(data).toFixed(2);
@@ -369,9 +363,16 @@ $(document).ready(function() {
                         return data;
                     }
                 },
-                { "data": "stock" },
                 { 
                     "data": "stock",
+                    "className": "align-middle text-center",
+                    "render": function(data, type, row) {
+                        return '<strong>' + data + '</strong>';
+                    }
+                },
+                { 
+                    "data": "stock",
+                    "className": "align-middle text-center",
                     "render": function(data, type, row) {
                         if(type === 'display') {
                             return getStockStatusBadge(data);
@@ -381,91 +382,53 @@ $(document).ready(function() {
                 },
                 { 
                     "data": null,
+                    "className": "align-middle text-center",
                     "render": function(data, type, row) {
                         return `
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Actions
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-warning btn-action" onclick="updateProduct('${row.objid}')" title="Edit Product">
+                                <i class="fas fa-pen"></i>
                             </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="viewProduct('${row.objid}')">
-                                    <i class="fas fa-eye mr-2 text-info"></i>View
-                                </a>
-                           
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteProduct('${row.objid}')">
-                                    <i class="fas fa-trash mr-2"></i>Delete
-                                </a>
-                            </div>
+                            <button type="button" class="btn btn-danger btn-action" onclick="deleteProduct('${row.objid}')" title="Delete Product">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>`;
                     },
                     "orderable": false,
                     "searchable": false
                 }
-            ],
-            "drawCallback": function() {
-                // Re-initialize any tooltips if needed
-            }
+            ]
         });
-        
-        // Add buttons after table is initialized
-        table.buttons().container().appendTo('#products-table_wrapper .col-md-6:eq(0)');
+    }
+
+    function updateTotalCount(count) {
+        $('#totalCount').text(count + ' Items');
     }
 
     // Initialize DataTable
     initializeDataTable();
 
     // ------------------------------------------------------------------
-    // 1. ADD PRODUCT
+    // RESET FORM
     // ------------------------------------------------------------------
-    window.openAddModal = function() {
-        $('#modalTitle').text('Add New Product');
+    window.resetForm = function() {
         $('#productForm')[0].reset();
         $('#prod_objid').val('');
-        $('#productModal').modal({
-            backdrop: 'static',
-            keyboard: false
-        });
-        $('#productModal').modal('show');
+        $('#formTitle').text('Add New Product');
+        $('#btnSubmit').html('<i class="fas fa-save mr-1"></i> Save Product');
+        $('#btnSubmit').removeClass('btn-warning').addClass('btn-primary');
     }
 
     // ------------------------------------------------------------------
-    // 2. VIEW PRODUCT
-    // ------------------------------------------------------------------
-    window.viewProduct = function(objid) {
-        console.log('Viewing product:', objid);
-        var productData = getProductDataById(objid);
-        currentViewProductId = objid;
-        
-        if(productData) {
-            // Populate the View Modal fields
-            $('#v_code').text(productData.product_code || 'N/A');
-            $('#v_product_code').text(productData.product_code || 'N/A');
-            $('#v_name').text(productData.product_name || 'N/A');
-            $('#v_product_name').text(productData.product_name || 'N/A');
-            $('#v_category').text(productData.category || 'N/A');
-            $('#v_price').html('₱' + (parseFloat(productData.price) || 0).toFixed(2));
-            $('#v_stock').text(productData.stock || 0);
-            $('#v_stock_status').html(getStockStatusBadge(productData.stock || 0));
-            $('#v_created_at').text(productData.date_created || productData.created_at || 'N/A');
-            
-            // Show the modal
-            $('#viewModal').modal('show');
-        } else {
-            console.error('Product not found:', objid);
-            Swal.fire("Error", "Could not retrieve product data. Product ID: " + objid, "error");
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // 3. UPDATE PRODUCT
+    // UPDATE PRODUCT (Populate Form)
     // ------------------------------------------------------------------
     window.updateProduct = function(objid) {
-        console.log('Updating product:', objid);
         var productData = getProductDataById(objid);
         
         if(productData) {
-            $('#modalTitle').text('Update Product');
+            $('#formTitle').text('Update Product');
+            $('#btnSubmit').html('<i class="fas fa-check mr-1"></i> Update Product');
+            $('#btnSubmit').removeClass('btn-primary').addClass('btn-warning');
             
             // Populate the Form fields
             $('#prod_objid').val(productData.objid);
@@ -475,30 +438,15 @@ $(document).ready(function() {
             $('#prod_price').val(productData.price);
             $('#prod_stock').val(productData.stock);
             
-            // Show the modal
-            $('#productModal').modal({
-                backdrop: 'static',
-                keyboard: false
-            });
-            $('#productModal').modal('show');
+            // Scroll to top of form on mobile
+            $('.form-panel').scrollTop(0);
         } else {
-            console.error('Product not found:', objid);
-            Swal.fire("Error", "Could not retrieve product data for update. Product ID: " + objid, "error");
+            Swal.fire("Error", "Could not retrieve product data.", "error");
         }
     }
 
     // ------------------------------------------------------------------
-    // 4. EDIT FROM VIEW
-    // ------------------------------------------------------------------
-    window.editFromView = function() {
-        if(currentViewProductId) {
-            $('#viewModal').modal('hide');
-            updateProduct(currentViewProductId);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // 5. DELETE PRODUCT
+    // DELETE PRODUCT
     // ------------------------------------------------------------------
     window.deleteProduct = function(objid) {
         Swal.fire({
@@ -506,18 +454,15 @@ $(document).ready(function() {
             text: "You won't be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
+            confirmButtonColor: '#dc3545',
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Show loading
                 Swal.fire({
                     title: 'Deleting...',
-                    text: 'Please wait',
                     allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
+                    didOpen: () => Swal.showLoading()
                 });
                 
                 $.ajax({
@@ -527,6 +472,10 @@ $(document).ready(function() {
                         Swal.close();
                         if(res.status === 'success') {
                             Swal.fire('Deleted!', res.message, 'success');
+                            // If the deleted product was being edited, reset the form
+                            if($('#prod_objid').val() == objid) {
+                                resetForm();
+                            }
                             table.ajax.reload(null, false);
                         } else {
                             Swal.fire('Error!', res.message, 'error');
@@ -534,8 +483,7 @@ $(document).ready(function() {
                     },
                     error: function(xhr) {
                         Swal.close();
-                        console.error('Error deleting product:', xhr);
-                        Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
+                        Swal.fire('Error!', 'Server communication error.', 'error');
                     }
                 });
             }
@@ -548,25 +496,24 @@ $(document).ready(function() {
     $('#productForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate required fields
         var product_code = $('#prod_code').val().trim();
         var product_name = $('#prod_name').val().trim();
         var category = $('#prod_category').val();
         var price = $('#prod_price').val();
         var stock = $('#prod_stock').val();
         
-        if(!product_code || !product_name || !category || !price || !stock) {
-            Swal.fire('Error!', 'All fields are required.', 'error');
+        if(!product_code || !product_name || !category || price === '' || stock === '') {
+            Swal.fire('Validation Error', 'All fields are required.', 'error');
             return;
         }
         
         if(parseFloat(price) < 0) {
-            Swal.fire('Error!', 'Price cannot be negative.', 'error');
+            Swal.fire('Validation Error', 'Price cannot be negative.', 'error');
             return;
         }
         
         if(parseInt(stock) < 0) {
-            Swal.fire('Error!', 'Stock cannot be negative.', 'error');
+            Swal.fire('Validation Error', 'Stock cannot be negative.', 'error');
             return;
         }
         
@@ -588,14 +535,10 @@ $(document).ready(function() {
             url = API_URL + '/products/' + payload.objid;
         }
 
-        // Show loading indicator
         Swal.fire({
-            title: 'Processing...',
-            text: 'Please wait',
+            title: isUpdate ? 'Updating...' : 'Saving...',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => Swal.showLoading()
         });
 
         $.ajax({
@@ -606,8 +549,15 @@ $(document).ready(function() {
             success: function(res) {
                 Swal.close();
                 if(res.status === 'success') {
-                    Swal.fire('Success!', res.message, 'success');
-                    $('#productModal').modal('hide');
+                    Swal.fire({
+                        icon: 'success',
+                        title: isUpdate ? 'Updated!' : 'Saved!',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    resetForm();
                     table.ajax.reload(null, false);
                 } else {
                     Swal.fire('Error!', res.message, 'error');
@@ -615,7 +565,6 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 Swal.close();
-                console.error('Form submission error:', xhr);
                 var errorMsg = 'Server communication error.';
                 if(xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;
@@ -625,29 +574,19 @@ $(document).ready(function() {
         });
     });
     
-    // Clear modal when closed
-    $('#productModal').on('hidden.bs.modal', function () {
-        $('#productForm')[0].reset();
-        $('#prod_objid').val('');
-    });
-    
     // Handle category input - allow custom category if needed
     $('#prod_category').on('change', function() {
         if($(this).val() === 'Other') {
-            // You can add a prompt to enter custom category
             Swal.fire({
                 title: 'Enter Category',
                 input: 'text',
                 inputLabel: 'Please specify the category',
                 showCancelButton: true,
                 inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to specify a category!';
-                    }
+                    if (!value) return 'You need to specify a category!';
                 }
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
-                    // Add new option and select it
                     var newCategory = result.value;
                     $('#prod_category').append(new Option(newCategory, newCategory));
                     $('#prod_category').val(newCategory);

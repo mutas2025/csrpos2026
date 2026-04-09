@@ -18,10 +18,9 @@ class TransactionController {
     public function getTransactions() {
         try {
             // Join with customers to show name instead of ID
-            // Selecting only necessary columns to ensure clean data
+            // REMOVED: o.order_id
             $sql = "SELECT 
                         o.objid, 
-                        o.order_id, 
                         COALESCE(c.fullname, 'Walk-in Customer') as customer_name, 
                         o.total_amount, 
                         o.payment_method, 
@@ -47,8 +46,14 @@ class TransactionController {
     public function getTransactionDetails($id) {
         try {
             // Get Order Header
+            // REMOVED: o.* (which selected all columns including order_id) and replaced with specific columns
             $sql = "SELECT 
-                        o.*, 
+                        o.objid,
+                        o.customer_id,
+                        o.total_amount, 
+                        o.payment_method, 
+                        o.status, 
+                        o.date_created,
                         COALESCE(c.fullname, 'Walk-in Customer') as customer_name 
                     FROM pos_orders o
                     LEFT JOIN tbl_customers c ON o.customer_id = c.objid

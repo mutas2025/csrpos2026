@@ -1,6 +1,6 @@
 <?php
 // customerlist.php
-// Display page for Customer Management
+// Display page for Customer Management - Split View Layout
 ?>
 
 <!DOCTYPE html>
@@ -26,44 +26,112 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
     
     <style>
+        /* Fix layout height */
         .content-wrapper { min-height: 100vh; }
-        table.dataTable thead th { background-color: #343a40; color: white; }
-        .dropdown-menu { min-width: 8rem; }
         
-        /* View Modal Styles */
-        .view-table td {
+        /* Custom Split View Styling */
+        .split-container {
+            display: flex;
+            height: calc(100vh - 120px);
+            gap: 20px;
             padding: 10px;
-            border-bottom: 1px solid #dee2e6;
         }
         
-        .view-table th {
-            padding: 10px;
-            border-bottom: 1px solid #dee2e6;
-            background-color: #f8f9fa;
-            width: 35%;
-            font-weight: 600;
+        .form-panel {
+            flex: 0 0 380px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
         }
         
-        .customer-image-placeholder {
-            text-align: center;
+        .form-panel-header {
+            padding: 15px 20px;
+            background-color: #343a40;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .form-panel-body {
             padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
+            overflow-y: auto;
+            flex-grow: 1;
         }
         
-        .customer-image-placeholder i {
-            font-size: 80px;
-            color: #6c757d;
+        .table-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
         }
         
-        .contact-info {
-            margin-top: 5px;
-            font-size: 0.9em;
+        .table-panel-header {
+            padding: 15px 20px;
+            background-color: #343a40;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
         }
         
-        .contact-info i {
-            width: 20px;
-            color: #007bff;
+        .table-panel-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        /* Inline Form Adjustments */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        /* DataTable Specifics */
+        table.dataTable thead th { background-color: #f8f9fa; color: #343a40; border-bottom: 2px solid #dee2e6; font-size: 0.875rem; }
+        table.dataTable tbody td { font-size: 0.875rem; vertical-align: middle; }
+        .dataTables_wrapper .dataTables_filter input { margin-left: 0; }
+        
+        /* Action Buttons */
+        .btn-action {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            margin: 0 2px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .split-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .form-panel {
+                flex: none;
+            }
         }
     </style>
 </head>
@@ -94,7 +162,7 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Customer Management</h1>
+                        <h1 class="m-0 text-dark">Customer Management</h1>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
@@ -108,152 +176,80 @@
 
         <section class="content">
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">List of Customers</h3>
-                                <div class="card-tools">
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="openAddModal()">
-                                        <i class="fas fa-plus"></i> Add Customer
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <table id="customers-table" class="table table-bordered table-striped table-hover">
-                                    <thead>
-                               
-                                            <th>Code</th>
-                                            <th>Full Name</th>
-                                            <th>Email</th>
-                                            <th>Phone</th>
-                                            <th>Address</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
+                <div class="split-container">
+                    
+                    <!-- LEFT PANEL: INLINE FORM -->
+                    <div class="form-panel">
+                        <div class="form-panel-header">
+                            <h5 class="mb-0 font-weight-bold"><i class="fas fa-users mr-2"></i><span id="formTitle">Add New Customer</span></h5>
+                            <button type="button" class="btn btn-sm btn-light" id="btnReset" onclick="resetForm()" title="Clear Form">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- Modal for Add/Edit Customer -->
-    <div class="modal fade" id="customerModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Add Customer</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form id="customerForm">
-                    <div class="modal-body">
-                        <input type="hidden" name="objid" id="cust_objid">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
+                        <div class="form-panel-body">
+                            <form id="customerForm" autocomplete="off">
+                                <input type="hidden" name="objid" id="cust_objid">
+                                
                                 <div class="form-group">
                                     <label>Customer Code <span class="text-danger">*</span></label>
-                                    <input type="text" name="customer_code" id="cust_code" class="form-control" required>
+                                    <input type="text" name="customer_code" id="cust_code" class="form-control form-control-sm" placeholder="e.g., CUST-001" required>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
+
                                 <div class="form-group">
                                     <label>Full Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="fullname" id="cust_fullname" class="form-control" required>
+                                    <input type="text" name="fullname" id="cust_fullname" class="form-control form-control-sm" placeholder="Enter full name" required>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6">
+
                                 <div class="form-group">
                                     <label>Email <span class="text-danger">*</span></label>
-                                    <input type="email" name="email" id="cust_email" class="form-control" required>
+                                    <input type="email" name="email" id="cust_email" class="form-control form-control-sm" placeholder="name@example.com" required>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
+
                                 <div class="form-group">
                                     <label>Phone <span class="text-danger">*</span></label>
-                                    <input type="text" name="phone" id="cust_phone" class="form-control" required>
+                                    <input type="text" name="phone" id="cust_phone" class="form-control form-control-sm" placeholder="e.g., 0912-345-6789" required>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-12">
+
                                 <div class="form-group">
                                     <label>Address <span class="text-danger">*</span></label>
-                                    <textarea name="address" id="cust_address" class="form-control" rows="3" required placeholder="Enter complete address..."></textarea>
+                                    <textarea name="address" id="cust_address" class="form-control form-control-sm" rows="4" placeholder="Enter complete address..." required></textarea>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <!-- Modal for View Customer -->
-    <div class="modal fade" id="viewModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info">
-                    <h5 class="modal-title text-white">Customer Details</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
-                            <div class="customer-image-placeholder">
-                                <i class="fas fa-user-circle"></i>
-                                <h5 id="v_fullname" class="mt-2">-</h5>
-                                <p class="text-muted" id="v_customer_code">-</p>
-                            </div>
+                                <div class="mt-4 d-flex">
+                                    <button type="submit" class="btn btn-primary btn-block" id="btnSubmit">
+                                        <i class="fas fa-save mr-1"></i> Save Customer
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="col-md-8">
-                            <table class="table table-borderless view-table">
-                                <tr>
-                                    <th>Customer Code:</th>
-                                    <td id="v_code">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Full Name:</th>
-                                    <td id="v_name">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Email:</th>
-                                    <td id="v_email">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Phone:</th>
-                                    <td id="v_phone">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Address:</th>
-                                    <td id="v_address">-</td>
-                                </tr>
+                    </div>
+
+                    <!-- RIGHT PANEL: DATA TABLE -->
+                    <div class="table-panel">
+                        <div class="table-panel-header">
+                            <h5 class="mb-0 font-weight-bold"><i class="fas fa-list mr-2"></i>Customer List</h5>
+                            <span class="badge badge-light" id="totalCount">0 Items</span>
+                        </div>
+                        <div class="table-panel-body">
+                            <table id="customers-table" class="table table-bordered table-hover mb-0" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Full Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Address</th>
+                                        <th class="text-center" style="width: 100px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="editFromView()">Edit Customer</button>
+
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 
 </div>
@@ -267,14 +263,6 @@
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
 <script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
 <script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-<script src="../../plugins/jszip/jszip.min.js"></script>
-<script src="../../plugins/pdfmake/pdfmake.min.js"></script>
-<script src="../../plugins/pdfmake/vfs_fonts.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 
 <!-- AdminLTE App -->
 <script src="../../dist/js/adminlte.min.js"></script>
@@ -282,10 +270,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.all.min.js"></script>
 
 <script>
-$(document).ready(function() {
+ $(document).ready(function() {
     const API_URL = '../../api/routes.php';
     var customersData = []; // Store customers data globally
-    var currentViewCustomerId = null; // Store current viewed customer ID
     var table;
 
     // Helper function to get customer data by ID
@@ -297,17 +284,24 @@ $(document).ready(function() {
     function initializeDataTable() {
         table = $('#customers-table').DataTable({
             "responsive": true,
-            "lengthChange": true,
+            "lengthChange": false,
             "autoWidth": false,
-            "pageLength": 10,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"],
+            "pageLength": 15,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "dom": '<"row mb-2"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"f>>rt<"row mt-2"<"col-sm-12 col-md-5"l><"col-sm-12 col-md-7"p>>',
+            "language": {
+                "search": "<div class='input-group input-group-sm'><div class='input-group-prepend'><span class='input-group-text'><i class='fas fa-search'></i></span></div>",
+                "searchPlaceholder": "Search customers...",
+            },
             "ajax": {
                 "url": API_URL + "/customers",
                 "type": "GET",
                 "dataSrc": function(json) {
-                    console.log("API Response:", json);
                     if (json.status === 'success') {
                         customersData = json.data; // Store data globally
+                        updateTotalCount(json.data.length);
                         return json.data;
                     } else {
                         console.error("API returned error:", json.message);
@@ -317,20 +311,21 @@ $(document).ready(function() {
                 },
                 "error": function (xhr, error, thrown) {
                     console.error("AJAX Error:", error, thrown);
-                    Swal.fire("Connection Error", "Could not connect to API: " + API_URL, "error");
+                    Swal.fire("Connection Error", "Could not connect to API.", "error");
                 }
             },
             "columns": [
-                { "data": "customer_code" },
-                { "data": "fullname" },
-                { "data": "email" },
-                { "data": "phone" },
+                { "data": "customer_code", "className": "align-middle" },
+                { "data": "fullname", "className": "align-middle" },
+                { "data": "email", "className": "align-middle" },
+                { "data": "phone", "className": "align-middle" },
                 { 
                     "data": "address",
+                    "className": "align-middle",
                     "render": function(data, type, row) {
                         if(type === 'display') {
-                            if(data && data.length > 50) {
-                                return '<span title="' + data + '">' + data.substring(0, 47) + '...</span>';
+                            if(data && data.length > 30) {
+                                return '<span title="' + data + '">' + data.substring(0, 27) + '...</span>';
                             }
                             return data || 'N/A';
                         }
@@ -339,90 +334,53 @@ $(document).ready(function() {
                 },
                 { 
                     "data": null,
+                    "className": "align-middle text-center",
                     "render": function(data, type, row) {
                         return `
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Actions
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-warning btn-action" onclick="updateCustomer('${row.objid}')" title="Edit Customer">
+                                <i class="fas fa-pen"></i>
                             </button>
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="viewCustomer('${row.objid}')">
-                                    <i class="fas fa-eye mr-2 text-info"></i>View
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteCustomer('${row.objid}')">
-                                    <i class="fas fa-trash mr-2"></i>Delete
-                                </a>
-                            </div>
+                            <button type="button" class="btn btn-danger btn-action" onclick="deleteCustomer('${row.objid}')" title="Delete Customer">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>`;
                     },
                     "orderable": false,
                     "searchable": false
                 }
-            ],
-            "drawCallback": function() {
-                // Re-initialize any tooltips if needed
-            }
+            ]
         });
-        
-        // Add buttons after table is initialized
-        table.buttons().container().appendTo('#customers-table_wrapper .col-md-6:eq(0)');
+    }
+
+    function updateTotalCount(count) {
+        $('#totalCount').text(count + ' Customers');
     }
 
     // Initialize DataTable
     initializeDataTable();
 
     // ------------------------------------------------------------------
-    // 1. ADD CUSTOMER
+    // RESET FORM
     // ------------------------------------------------------------------
-    window.openAddModal = function() {
-        $('#modalTitle').text('Add New Customer');
+    window.resetForm = function() {
         $('#customerForm')[0].reset();
         $('#cust_objid').val('');
-        $('#customerModal').modal({
-            backdrop: 'static',
-            keyboard: false
-        });
-        $('#customerModal').modal('show');
+        $('#formTitle').text('Add New Customer');
+        $('#btnSubmit').html('<i class="fas fa-save mr-1"></i> Save Customer');
+        $('#btnSubmit').removeClass('btn-warning').addClass('btn-primary');
     }
 
     // ------------------------------------------------------------------
-    // 2. VIEW CUSTOMER
-    // ------------------------------------------------------------------
-    window.viewCustomer = function(objid) {
-        console.log('Viewing customer:', objid);
-        var customerData = getCustomerDataById(objid);
-        currentViewCustomerId = objid;
-        
-        if(customerData) {
-            // Populate the View Modal fields
-            $('#v_code').text(customerData.customer_code || 'N/A');
-            $('#v_customer_code').text(customerData.customer_code || 'N/A');
-            $('#v_name').text(customerData.fullname || 'N/A');
-            $('#v_fullname').text(customerData.fullname || 'N/A');
-            $('#v_email').html('<i class="fas fa-envelope mr-2"></i>' + (customerData.email || 'N/A'));
-            $('#v_phone').html('<i class="fas fa-phone mr-2"></i>' + (customerData.phone || 'N/A'));
-            $('#v_address').text(customerData.address || 'No address provided.');
-            $('#v_created_at').text(customerData.created_at || 'N/A');
-            $('#v_updated_at').text(customerData.updated_at || 'N/A');
-            
-            // Show the modal
-            $('#viewModal').modal('show');
-        } else {
-            console.error('Customer not found:', objid);
-            Swal.fire("Error", "Could not retrieve customer data. Customer ID: " + objid, "error");
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // 3. UPDATE CUSTOMER
+    // UPDATE CUSTOMER (Populate Form)
     // ------------------------------------------------------------------
     window.updateCustomer = function(objid) {
-        console.log('Updating customer:', objid);
         var customerData = getCustomerDataById(objid);
         
         if(customerData) {
-            $('#modalTitle').text('Update Customer');
+            $('#formTitle').text('Update Customer');
+            $('#btnSubmit').html('<i class="fas fa-check mr-1"></i> Update Customer');
+            $('#btnSubmit').removeClass('btn-primary').addClass('btn-warning');
             
             // Populate the Form fields
             $('#cust_objid').val(customerData.objid);
@@ -432,30 +390,15 @@ $(document).ready(function() {
             $('#cust_phone').val(customerData.phone);
             $('#cust_address').val(customerData.address);
             
-            // Show the modal
-            $('#customerModal').modal({
-                backdrop: 'static',
-                keyboard: false
-            });
-            $('#customerModal').modal('show');
+            // Scroll to top of form on mobile
+            $('.form-panel').scrollTop(0);
         } else {
-            console.error('Customer not found:', objid);
-            Swal.fire("Error", "Could not retrieve customer data for update. Customer ID: " + objid, "error");
+            Swal.fire("Error", "Could not retrieve customer data.", "error");
         }
     }
 
     // ------------------------------------------------------------------
-    // 4. EDIT FROM VIEW
-    // ------------------------------------------------------------------
-    window.editFromView = function() {
-        if(currentViewCustomerId) {
-            $('#viewModal').modal('hide');
-            updateCustomer(currentViewCustomerId);
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // 5. DELETE CUSTOMER
+    // DELETE CUSTOMER
     // ------------------------------------------------------------------
     window.deleteCustomer = function(objid) {
         Swal.fire({
@@ -463,18 +406,15 @@ $(document).ready(function() {
             text: "You won't be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
+            confirmButtonColor: '#dc3545',
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Show loading
                 Swal.fire({
                     title: 'Deleting...',
-                    text: 'Please wait',
                     allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
+                    didOpen: () => Swal.showLoading()
                 });
                 
                 $.ajax({
@@ -484,6 +424,10 @@ $(document).ready(function() {
                         Swal.close();
                         if(res.status === 'success') {
                             Swal.fire('Deleted!', res.message, 'success');
+                            // If the deleted customer was being edited, reset the form
+                            if($('#cust_objid').val() == objid) {
+                                resetForm();
+                            }
                             table.ajax.reload(null, false);
                         } else {
                             Swal.fire('Error!', res.message, 'error');
@@ -491,8 +435,7 @@ $(document).ready(function() {
                     },
                     error: function(xhr) {
                         Swal.close();
-                        console.error('Error deleting customer:', xhr);
-                        Swal.fire('Error!', 'Server communication error: ' + (xhr.statusText || 'Unknown error'), 'error');
+                        Swal.fire('Error!', 'Server communication error.', 'error');
                     }
                 });
             }
@@ -549,14 +492,10 @@ $(document).ready(function() {
             url = API_URL + '/customers/' + payload.objid;
         }
 
-        // Show loading indicator
         Swal.fire({
-            title: 'Processing...',
-            text: 'Please wait',
+            title: isUpdate ? 'Updating...' : 'Saving...',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => Swal.showLoading()
         });
 
         $.ajax({
@@ -567,8 +506,15 @@ $(document).ready(function() {
             success: function(res) {
                 Swal.close();
                 if(res.status === 'success') {
-                    Swal.fire('Success!', res.message, 'success');
-                    $('#customerModal').modal('hide');
+                    Swal.fire({
+                        icon: 'success',
+                        title: isUpdate ? 'Updated!' : 'Saved!',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    resetForm();
                     table.ajax.reload(null, false);
                 } else {
                     Swal.fire('Error!', res.message, 'error');
@@ -584,12 +530,6 @@ $(document).ready(function() {
                 Swal.fire('Error!', errorMsg, 'error');
             }
         });
-    });
-    
-    // Clear modal when closed
-    $('#customerModal').on('hidden.bs.modal', function () {
-        $('#customerForm')[0].reset();
-        $('#cust_objid').val('');
     });
 });
 </script>

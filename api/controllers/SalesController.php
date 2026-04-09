@@ -39,9 +39,9 @@ class SalesController {
             $summary = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // 2. Get Detailed Sales List
+            // REMOVED 'o.order_id' from SELECT as requested. Using 'o.objid' only.
             $listSql = "SELECT 
                             o.objid,
-                            o.order_id,
                             COALESCE(c.fullname, 'Walk-in Customer') as customer_name,
                             o.net_amount,
                             o.payment_method,

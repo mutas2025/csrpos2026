@@ -41,6 +41,7 @@ class PosController {
 
     /**
      * Process the Transaction (Checkout)
+     * Ensures order_id is generated in pos_orders and strictly used in pos_order_items.
      */
     public function processTransaction(array $data) {
         try {
@@ -67,7 +68,7 @@ class PosController {
                 $qty = $item['qty'];
                 $price = $item['price'];
                 
-                // Check current DB stock
+                // Check current DB stock with row locking to prevent race conditions
                 $stmt = $this->con->prepare("SELECT stock FROM tbl_products WHERE objid = ? FOR UPDATE");
                 $stmt->execute([$pid]);
                 $product = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -82,8 +83,7 @@ class PosController {
                 $itemSubtotal = $price * $qty;
                 $subtotal += $itemSubtotal;
                 
-                // Calculate tax per item or on total? Let's do per item for precision, 
-                // but standard is often on total. Here we do simple math.
+                // Calculate tax
                 $totalTax += ($itemSubtotal * $taxRate);
             }
 
@@ -97,13 +97,15 @@ class PosController {
                     throw new Exception("Insufficient amount tendered.");
                 }
             } else {
-                // For E-Wallet, assume exact payment or valid reference logic could be added here
+                // For non-cash, assume exact payment or handle external logic separately
                 $amountTendered = $netAmount; 
             }
             
             $changeAmount = $amountTendered - $netAmount;
 
             // 3. Insert into pos_orders
+            // We assume 'pos_orders' has an auto-increment primary key 'objid' or 'id'.
+            // We do not insert order_id manually; we let the Database auto-generate it.
             $orderSql = "INSERT INTO pos_orders 
                          (customer_id, total_amount, tax_amount, discount_amount, net_amount, payment_method, amount_tendered, change_amount, status, date_created)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETED', NOW())";
@@ -120,9 +122,12 @@ class PosController {
                 $changeAmount
             ]);
 
+            // 4. Retrieve the Auto-Generated Order ID
+            // This is the key step. This ID comes from pos_orders.
             $orderId = $this->con->lastInsertId();
 
-            // 4. Insert Items and Update Stock
+            // 5. Insert Items and Update Stock
+            // We use the $orderId retrieved above to ensure pos_order_items references the correct order.
             $itemSql = "INSERT INTO pos_order_items (order_id, product_id, product_name, price, quantity, subtotal) VALUES (?, ?, ?, ?, ?, ?)";
             $itemStmt = $this->con->prepare($itemSql);
 
@@ -131,8 +136,10 @@ class PosController {
 
             foreach ($cartItems as $item) {
                 $itemSub = $item['price'] * $item['qty'];
+                
+                // Insert into pos_order_items using the SAME $orderId
                 $itemStmt->execute([
-                    $orderId,
+                    $orderId,      // This links the item to the order created in step 3
                     $item['objid'],
                     $item['product_name'],
                     $item['price'],
@@ -140,13 +147,14 @@ class PosController {
                     $itemSub
                 ]);
 
+                // Update Product Stock
                 $updateStockStmt->execute([$item['qty'], $item['objid']]);
             }
 
             // Commit Transaction
             $this->con->commit();
 
-            // 5. Prepare Receipt Data
+            // 6. Prepare Receipt Data
             // Fetch customer name if exists
             $customerName = "Walk-in Customer";
             if ($customer_id) {
@@ -177,7 +185,10 @@ class PosController {
             ];
 
         } catch (Exception $e) {
-            $this->con->rollBack();
+            // Rollback if any error occurs
+            if ($this->con->inTransaction()) {
+                $this->con->rollBack();
+            }
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }

@@ -9,6 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sales Report</title>
+    <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
     <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
@@ -144,7 +145,7 @@
                             <thead>
                                 <tr>
                                     <th>Date</th>
-                                    <th>Order #</th>
+                                    <th>Order ID</th>
                                     <th>Customer</th>
                                     <th class="text-right">Amount</th>
                                     <th>Payment</th>
@@ -222,10 +223,11 @@
         const salesBody = $('#salesTableBody');
         salesBody.empty();
         data.sales.forEach(s => {
+            // Updated to use s.objid instead of s.order_id
             salesBody.append(`
                 <tr>
                     <td>${s.date_created}</td>
-                    <td>${s.order_id}</td>
+                    <td>#${s.objid}</td>
                     <td>${s.customer_name}</td>
                     <td class="text-right">₱${parseFloat(s.net_amount).toFixed(2)}</td>
                     <td>${s.payment_method}</td>
