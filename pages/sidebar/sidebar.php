@@ -19,6 +19,14 @@
           </a>
         </li>
 
+                <!-- Users Link -->
+        <li id="pos_sidebar" class="nav-item">
+          <a href="pos.php" class="nav-link">
+            <i class="nav-icon fas fa-shopping-cart"></i>
+            <p>POS</p>
+          </a>
+        </li>
+
         <!-- Users Link -->
         <li id="users_sidebar" class="nav-item">
           <a href="users.php" class="nav-link">
