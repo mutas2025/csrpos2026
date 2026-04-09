@@ -1,6 +1,6 @@
 <?php
 // ============================================================================
-// routes.php - Updated with POS support
+// routes.php - Updated with POS, Transactions, and Sales support
 // ============================================================================
 
 // ============================================================================
@@ -43,7 +43,9 @@ if (session_status() === PHP_SESSION_NONE) {
     'LoginController.php',
     'ProductController.php',
     'CustomerController.php',
-    'PosController.php' // ADDED POS CONTROLLER
+    'PosController.php',
+    'TransactionController.php', // ADDED TRANSACTION CONTROLLER
+    'SalesController.php'         // ADDED SALES CONTROLLER
 ];
 
 // Load controllers if they exist
@@ -395,6 +397,57 @@ try {
             break;
 
         // ====================================================================
+        // CASE: Transactions (History)
+        // ====================================================================
+        case 'transactions':
+            if (!class_exists('TransactionController')) {
+                $response = ['status' => 'error', 'message' => 'TransactionController not found'];
+                break;
+            }
+            
+            $controller = new TransactionController();
+
+            switch ($method) {
+                case 'GET':
+                    if ($action) {
+                        // Get specific transaction details (Receipt)
+                        $response = $controller->getTransactionDetails($action);
+                    } else {
+                        // Get all transactions list
+                        $response = $controller->getTransactions();
+                    }
+                    break;
+                default:
+                    http_response_code(405);
+                    $response = ['status' => 'error', 'message' => 'Method not allowed.'];
+            }
+            break;
+
+        // ====================================================================
+        // CASE: Sales Reports
+        // ====================================================================
+        case 'sales':
+            if (!class_exists('SalesController')) {
+                $response = ['status' => 'error', 'message' => 'SalesController not found'];
+                break;
+            }
+            
+            $controller = new SalesController();
+
+            switch ($method) {
+                case 'GET':
+                    // Expecting ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+                    $startDate = $_GET['start_date'] ?? null;
+                    $endDate = $_GET['end_date'] ?? null;
+                    $response = $controller->getSalesReport($startDate, $endDate);
+                    break;
+                default:
+                    http_response_code(405);
+                    $response = ['status' => 'error', 'message' => 'Method not allowed.'];
+            }
+            break;
+
+        // ====================================================================
         // CASE: Test endpoint for debugging
         // ====================================================================
         case 'test':
@@ -420,7 +473,7 @@ try {
             $response = [
                 'status' => 'error',
                 'message' => "Resource '{$resource}' not found.",
-                'hint' => 'Available endpoints: /login, /logout, /check-login, /change-password, /add, /users, /products, /customers, /pos, /test'
+                'hint' => 'Available endpoints: /login, /logout, /check-login, /change-password, /add, /users, /products, /customers, /pos, /transactions, /sales, /test'
             ];
             break;
     }

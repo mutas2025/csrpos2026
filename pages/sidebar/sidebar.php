@@ -26,14 +26,6 @@
             <p>POS</p>
           </a>
         </li>
-
-        <!-- Users Link -->
-        <li id="users_sidebar" class="nav-item">
-          <a href="users.php" class="nav-link">
-            <i class="nav-icon fas fa-user"></i>
-            <p>Users</p>
-          </a>
-        </li>
         
         <!-- Products Link -->
         <li id="products_sidebar" class="nav-item">
@@ -48,6 +40,28 @@
           <a href="customerlist.php" class="nav-link">
             <i class="nav-icon fas fa-id-card"></i>
             <p>Customers</p>
+          </a>
+        </li>
+
+                <li id="customers_sidebar" class="nav-item">
+          <a href="transaction.php" class="nav-link">
+            <i class="nav-icon fas fa-exchange-alt"></i>
+            <p>Transactions</p>
+          </a>
+        </li>
+
+                <li id="customers_sidebar" class="nav-item">
+          <a href="sales.php" class="nav-link">
+            <i class="nav-icon fas fa-chart-line"></i>
+            <p>Sales</p>
+          </a>
+        </li>
+
+                <!-- Users Link -->
+        <li id="users_sidebar" class="nav-item">
+          <a href="users.php" class="nav-link">
+            <i class="nav-icon fas fa-user"></i>
+            <p>Users</p>
           </a>
         </li>
 

@@ -1,6 +1,6 @@
 <?php
 // pos.php
-// Point of Sale Interface
+// Point of Sale Interface - Updated with Product Code / Name Search
 ?>
 
 <!DOCTYPE html>
@@ -25,6 +25,9 @@
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
     
+    <!-- jQuery UI (Required for Autocomplete) -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
     <style>
         .content-wrapper { min-height: 100vh; overflow-x: hidden; }
         
@@ -112,6 +115,28 @@
             justify-content: center;
             gap: 5px;
         }
+
+        /* Quick Add / Autocomplete Styles */
+        .quick-add-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .ui-autocomplete {
+            z-index: 9999; /* Ensure dropdown appears above modal/content */
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .product-suggestion-item {
+            padding: 5px;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .product-suggestion-item strong {
+            color: #007bff;
+            float: right;
+        }
     </style>
 </head>
 
@@ -183,6 +208,18 @@
                         <div class="cart-container">
                             <h4 class="mb-3"><i class="fas fa-shopping-cart"></i> Current Order</h4>
                             
+                            <!-- NEW: Quick Add Section -->
+                            <div class="quick-add-section">
+                                <label class="small text-muted">Quick Add (Code or Name)</label>
+                                <div class="input-group mb-1">
+                                    <input type="text" id="quickAddInput" class="form-control" placeholder="Scan Code or Type Name..." autocomplete="off">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="button" onclick="triggerQuickAdd()"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Press Enter to add</small>
+                            </div>
+
                             <div class="cart-items">
                                 <table class="table table-sm table-striped">
                                     <thead>
@@ -310,6 +347,8 @@
 <!-- REQUIRED SCRIPTS -->
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- jQuery UI (Required for Autocomplete) -->
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <!-- DataTables -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -336,6 +375,7 @@
                 customers = res.data.customers;
                 renderProducts(products);
                 populateCustomerSelect(customers);
+                initAutocomplete(); // Initialize Quick Add
             } else {
                 Swal.fire('Error', res.message, 'error');
             }
@@ -344,7 +384,7 @@
         });
     }
 
-    // 2. Render Products
+    // 2. Render Products (Grid View)
     function renderProducts(data) {
         const grid = $('#productGrid');
         grid.empty();
@@ -380,15 +420,73 @@
         });
     }
 
-    // 4. Search Filter
-    $('#productSearch').on('keyup', function() {
-        const val = $(this).val().toLowerCase();
-        const filtered = products.filter(p => 
-            p.product_name.toLowerCase().includes(val) || 
-            p.product_code.toLowerCase().includes(val) ||
-            p.category.toLowerCase().includes(val)
-        );
-        renderProducts(filtered);
+    // 4. Initialize Autocomplete for Quick Add
+    function initAutocomplete() {
+        $("#quickAddInput").autocomplete({
+            source: products.map(function(p) {
+                return {
+                    label: p.product_code + " - " + p.product_name,
+                    value: p.product_code, // Code is used for matching
+                    data: p // Store full object
+                };
+            }),
+            minLength: 0, // Show all on click if empty
+            select: function(event, ui) {
+                // ui.item.data contains the full product object
+                addToCart(ui.item.data.objid);
+                $(this).val(''); // Clear input
+                return false;
+            },
+            focus: function(event, ui) {
+                // Prevent value insertion on focus
+                event.preventDefault();
+            }
+        }).on("focus", function () {
+            $(this).autocomplete("search", "");
+        });
+    }
+
+    // 4b. Trigger Quick Add manually (Enter key or Button)
+    window.triggerQuickAdd = function() {
+        const input = $('#quickAddInput');
+        const term = input.val().trim();
+        
+        if (!term) return;
+
+        // Try to find exact code match first
+        let product = products.find(p => p.product_code.toLowerCase() === term.toLowerCase());
+        
+        // If no code match, try exact name match
+        if (!product) {
+            product = products.find(p => p.product_name.toLowerCase() === term.toLowerCase());
+        }
+
+        if (product) {
+            addToCart(product.objid);
+            input.val('');
+        } else {
+            // If not found, show the autocomplete list if available, or warn user
+            // Since autocomplete relies on UI interaction, if user hits Enter on invalid text:
+            Swal.fire({
+                icon: 'warning',
+                title: 'Product Not Found',
+                text: 'No product matches code or name: "' + term + '"',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    };
+
+    // Handle Enter key in Quick Add input
+    $('#quickAddInput').on('keypress', function(e) {
+        if(e.which == 13) {
+            e.preventDefault(); // Prevent form submission
+            // If autocomplete menu is open, jQuery UI handles it.
+            // If menu is closed, trigger manual check
+            if ($(".ui-autocomplete").is(":hidden")) {
+                triggerQuickAdd();
+            }
+        }
     });
 
     // 5. Cart Logic
