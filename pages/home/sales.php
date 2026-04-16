@@ -196,44 +196,65 @@
             } else {
                 Swal.fire('Error', res.message, 'error');
             }
+        }).fail(function() {
+            Swal.close();
+            Swal.fire('Error', 'Failed to connect to server.', 'error');
         });
     };
 
     function updateUI(data) {
+        // Helper function to safely parse numbers and prevent NaN
+        const safeFloat = (val) => parseFloat(val) || 0;
+        const safeInt = (val) => parseInt(val) || 0;
+
         // 1. Summary
-        $('#summary-trans').text(data.summary.total_transactions);
-        $('#summary-rev').text('₱' + parseFloat(data.summary.total_revenue).toFixed(2));
-        $('#summary-disc').text('₱' + parseFloat(data.summary.total_discount).toFixed(2));
-        $('#summary-tax').text('₱' + parseFloat(data.summary.total_tax).toFixed(2));
+        // Check if summary exists to avoid errors if structure changes
+        const summary = data.summary || {};
+        
+        $('#summary-trans').text(safeInt(summary.total_transactions));
+        $('#summary-rev').text('₱' + safeFloat(summary.total_revenue).toFixed(2));
+        $('#summary-disc').text('₱' + safeFloat(summary.total_discount).toFixed(2));
+        $('#summary-tax').text('₱' + safeFloat(summary.total_tax).toFixed(2));
 
         // 2. Top Products
         const topBody = $('#topProductsBody');
         topBody.empty();
-        data.top_products.forEach(p => {
-            topBody.append(`
-                <tr>
-                    <td>${p.product_name}</td>
-                    <td>${p.total_qty}</td>
-                    <td class="text-right">₱${parseFloat(p.total_sales).toFixed(2)}</td>
-                </tr>
-            `);
-        });
+        
+        // Check if top_products is an array before looping
+        if (Array.isArray(data.top_products) && data.top_products.length > 0) {
+            data.top_products.forEach(p => {
+                topBody.append(`
+                    <tr>
+                        <td>${p.product_name || 'Unknown Product'}</td>
+                        <td>${safeInt(p.total_qty)}</td>
+                        <td class="text-right">₱${safeFloat(p.total_sales).toFixed(2)}</td>
+                    </tr>
+                `);
+            });
+        } else {
+            topBody.append('<tr><td colspan="3" class="text-center">No sales data available for this period.</td></tr>');
+        }
 
         // 3. Detailed Sales
         const salesBody = $('#salesTableBody');
         salesBody.empty();
-        data.sales.forEach(s => {
-            // Updated to use s.objid instead of s.order_id
-            salesBody.append(`
-                <tr>
-                    <td>${s.date_created}</td>
-                    <td>#${s.objid}</td>
-                    <td>${s.customer_name}</td>
-                    <td class="text-right">₱${parseFloat(s.net_amount).toFixed(2)}</td>
-                    <td>${s.payment_method}</td>
-                </tr>
-            `);
-        });
+
+        // Check if sales is an array before looping
+        if (Array.isArray(data.sales) && data.sales.length > 0) {
+            data.sales.forEach(s => {
+                salesBody.append(`
+                    <tr>
+                        <td>${s.date_created}</td>
+                        <td>#${s.objid}</td>
+                        <td>${s.customer_name || 'Guest'}</td>
+                        <td class="text-right">₱${safeFloat(s.net_amount).toFixed(2)}</td>
+                        <td>${s.payment_method}</td>
+                    </tr>
+                `);
+            });
+        } else {
+            salesBody.append('<tr><td colspan="5" class="text-center">No transactions found for this period.</td></tr>');
+        }
     }
 
     // Load initial report
