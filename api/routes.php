@@ -34,11 +34,11 @@ if (session_status() === PHP_SESSION_NONE) {
 // ============================================================================
 // SECTION 4: LOAD DEPENDENT CLASSES
 // ============================================================================
- $basePath = dirname(__DIR__);
- $controllersPath = $basePath . '/api/controllers/';
+$basePath = dirname(__DIR__);
+$controllersPath = $basePath . '/api/controllers/';
 
 // Define controller files
- $controllers = [
+$controllers = [
     'UsersController.php',
     'LoginController.php',
     'ProductController.php',
@@ -46,7 +46,7 @@ if (session_status() === PHP_SESSION_NONE) {
     'PosController.php',
     'TransactionController.php',
     'SalesController.php',
-    'RegisterController.php' // ADDED REGISTER CONTROLLER
+    'RegisterController.php'
 ];
 
 // Load controllers if they exist
@@ -62,14 +62,14 @@ foreach ($controllers as $controller) {
 // ============================================================================
 // SECTION 5: PARSE THE INCOMING REQUEST
 // ============================================================================
- $method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'];
 
 // Log the request for debugging
 error_log("Request Method: " . $method);
 error_log("Request URI: " . $_SERVER['REQUEST_URI']);
 
 // Parse input. Prioritize JSON body for PUT/POST, fallback to $_REQUEST
- $input = [];
+$input = [];
 if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
     $rawInput = file_get_contents('php://input');
     error_log("Raw Input: " . $rawInput);
@@ -91,26 +91,26 @@ if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
 // ============================================================================
 // SECTION 6: EXTRACT THE RESOURCE PATH
 // ============================================================================
- $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
- $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 error_log("Script Name: " . $scriptName);
 error_log("URI: " . $uri);
 
 // Remove the base path from the URI to get the endpoint
- $pathInfo = substr($uri, strlen($scriptName));
- $pathInfo = trim($pathInfo, '/');
+$pathInfo = substr($uri, strlen($scriptName));
+$pathInfo = trim($pathInfo, '/');
 
 // Remove 'routes.php' if it appears in the path
- $pathInfo = str_replace('routes.php', '', $pathInfo);
- $pathInfo = trim($pathInfo, '/');
+$pathInfo = str_replace('routes.php', '', $pathInfo);
+$pathInfo = trim($pathInfo, '/');
 
- $segments = explode('/', $pathInfo);
+$segments = explode('/', $pathInfo);
 
 // Determine resource and parameters
- $resource = $segments[0] ?? '';
- $action   = $segments[1] ?? null;
- $id       = $segments[2] ?? null;
+$resource = $segments[0] ?? '';
+$action   = $segments[1] ?? null;
+$id       = $segments[2] ?? null;
 
 error_log("Resource: " . $resource);
 error_log("Action: " . $action);
@@ -120,7 +120,7 @@ error_log("ID: " . $id);
 // SECTION 7: DISPATCH TO THE CORRECT CONTROLLER
 // ============================================================================
 
- $response = [];
+$response = [];
 
 try {
     // Simple validation to ensure a resource was requested
@@ -407,29 +407,76 @@ try {
         // ====================================================================
         // CASE: Transactions (History)
         // ====================================================================
-        case 'transactions':
-            if (!class_exists('TransactionController')) {
-                $response = ['status' => 'error', 'message' => 'TransactionController not found'];
-                break;
-            }
-            
-            $controller = new TransactionController();
+// ====================================================================
+// CASE: Transactions (History)
+// ====================================================================
+case 'transactions':
+    if (!class_exists('TransactionController')) {
+        $response = ['status' => 'error', 'message' => 'TransactionController not found'];
+        break;
+    }
+    
+    $controller = new TransactionController();
 
-            switch ($method) {
-                case 'GET':
-                    if ($action) {
-                        // Get specific transaction details (Receipt)
-                        $response = $controller->getTransactionDetails($action);
-                    } else {
-                        // Get all transactions list
-                        $response = $controller->getTransactions();
-                    }
-                    break;
-                default:
-                    http_response_code(405);
-                    $response = ['status' => 'error', 'message' => 'Method not allowed.'];
+    switch ($method) {
+        case 'GET':
+            // Parse segments for nested routes
+            // URL pattern: /transactions/count, /transactions/details/123, /transactions/reprint/123, /transactions/search?keyword=
+            if (!empty($segments[1])) {
+                $subResource = $segments[1];
+                $paramValue = $segments[2] ?? null;
+                
+                switch ($subResource) {
+                    case 'count':
+                        $response = $controller->getTransactionCount();
+                        break;
+                    case 'details':
+                        if ($paramValue) {
+                            $response = $controller->getTransactionDetails($paramValue);
+                        } else {
+                            http_response_code(400);
+                            $response = ['status' => 'error', 'message' => 'Transaction ID required for details'];
+                        }
+                        break;
+                    case 'reprint':
+                        if ($paramValue) {
+                            $response = $controller->reprintReceipt($paramValue);
+                        } else {
+                            http_response_code(400);
+                            $response = ['status' => 'error', 'message' => 'Transaction ID required for reprint'];
+                        }
+                        break;
+                    case 'search':
+                        $keyword = $_GET['keyword'] ?? '';
+                        if ($keyword) {
+                            $response = $controller->searchTransactions($keyword);
+                        } else {
+                            http_response_code(400);
+                            $response = ['status' => 'error', 'message' => 'Search keyword required'];
+                        }
+                        break;
+                    default:
+                        // If subResource is numeric, treat as transaction ID
+                        if (is_numeric($subResource)) {
+                            $response = $controller->getTransactionDetails($subResource);
+                        } else {
+                            http_response_code(404);
+                            $response = ['status' => 'error', 'message' => "Invalid transaction endpoint: {$subResource}"];
+                        }
+                        break;
+                }
+            } else {
+                // Get all transactions list with pagination
+                $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+                $response = $controller->getTransactions($page, $limit);
             }
             break;
+        default:
+            http_response_code(405);
+            $response = ['status' => 'error', 'message' => 'Method not allowed. Use GET for transactions.'];
+    }
+    break;
 
         // ====================================================================
         // CASE: Sales Reports
@@ -481,7 +528,7 @@ try {
             $response = [
                 'status' => 'error',
                 'message' => "Resource '{$resource}' not found.",
-                'hint' => 'Available endpoints: /register, /login, /logout, /check-login, /change-password, /add, /users, /products, /customers, /pos, /transactions, /sales, /test'
+                'hint' => 'Available endpoints: /register, /login, /logout, /check-login, /change-password, /users, /products, /customers, /pos, /transactions, /sales, /test'
             ];
             break;
     }
