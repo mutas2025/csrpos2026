@@ -1,6 +1,6 @@
 <?php
 // pos.php
-// Point of Sale Interface - Updated with Product Code / Name Search & 5-Column Grid
+// Point of Sale Interface - Barcode Scanner & Name Entry (Enter Key Only)
 ?>
 
 <!DOCTYPE html>
@@ -14,19 +14,20 @@
     <!-- Google Font: Source Sans Pro -->
     <link rel="icon" type="image/png" sizes="40x16" href="../../dist/img/splogo.png">
     <link rel="stylesheet" href="../../dist/css/font.css">
+    
     <!-- DataTables & Bootstrap 4 -->
     <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
     <link rel="stylesheet" href="../../plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css">
+    
     <!-- Theme style -->
     <link rel="stylesheet" href="../../dist/css/adminlte.min.css">
+    
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.0/dist/sweetalert2.min.css">
-    
-    <!-- jQuery UI (Required for Autocomplete) -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 
     <style>
         .content-wrapper { min-height: 100vh; overflow-x: hidden; }
@@ -122,28 +123,13 @@
             gap: 5px;
         }
 
-        /* Quick Add / Autocomplete Styles */
+        /* Quick Add / Barcode Styles */
         .quick-add-section {
             margin-bottom: 15px;
             padding-bottom: 15px;
             border-bottom: 1px solid #eee;
         }
-        .ui-autocomplete {
-            z-index: 9999; /* Ensure dropdown appears above modal/content */
-            max-height: 200px;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        .product-suggestion-item {
-            padding: 5px;
-            font-size: 14px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .product-suggestion-item strong {
-            color: #007bff;
-            float: right;
-        }
-
+        
         /* 5 Column Grid Logic */
         .col-5-cols {
             position: relative;
@@ -164,6 +150,27 @@
         @media (max-width: 576px) {
             .col-5-cols { flex: 0 0 50%; max-width: 50%; } /* 2 columns on mobile */
         }
+
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .toast-item {
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .toast-item.show { opacity: 1; }
+        .toast-item.success { border-left: 5px solid #28a745; }
+        .toast-item.error { border-left: 5px solid #dc3545; }
     </style>
 </head>
 
@@ -215,7 +222,7 @@
                             <div class="card-header">
                                 <h3 class="card-title">Products</h3>
                                 <div class="card-tools">
-                                    <input type="text" id="productSearch" class="form-control form-control-sm" placeholder="Search products..." style="width: 200px;">
+                                    <input type="text" id="productSearch" class="form-control form-control-sm" placeholder="Filter grid..." style="width: 200px;">
                                 </div>
                             </div>
                             <div class="card-body p-0">
@@ -235,16 +242,16 @@
                         <div class="cart-container">
                             <h4 class="mb-3"><i class="fas fa-shopping-cart"></i> Current Order</h4>
                             
-                            <!-- Quick Add Section -->
+                            <!-- Quick Add / Barcode Section -->
                             <div class="quick-add-section">
-                                <label class="small text-muted">Quick Add (Code or Name)</label>
+                                <label class="small text-muted">Scan Barcode or Type Code & Press Enter</label>
                                 <div class="input-group mb-1">
-                                    <input type="text" id="quickAddInput" class="form-control" placeholder="Scan Code or Type Name..." autocomplete="off">
+                                    <input type="text" id="quickAddInput" class="form-control" placeholder="Scan code here..." autocomplete="off" autofocus>
                                     <div class="input-group-append">
-                                        <button class="btn btn-primary" type="button" onclick="triggerQuickAdd()"><i class="fas fa-plus"></i></button>
+                                        <button class="btn btn-primary" type="button" onclick="triggerManualAdd()"><i class="fas fa-plus"></i></button>
                                     </div>
                                 </div>
-                                <small class="text-muted">Press Enter to add</small>
+                                <small class="text-muted">System prioritizes Product Code (Barcode)</small>
                             </div>
 
                             <div class="cart-items">
@@ -369,13 +376,14 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
 </div>
 
 <!-- REQUIRED SCRIPTS -->
 <script src="../../plugins/jquery/jquery.min.js"></script>
 <script src="../../plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- jQuery UI (Required for Autocomplete) -->
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <!-- DataTables -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -402,7 +410,8 @@
                 customers = res.data.customers;
                 renderProducts(products);
                 populateCustomerSelect(customers);
-                initAutocomplete(); // Initialize Quick Add
+                // Keep focus on input for scanner
+                $("#quickAddInput").focus();
             } else {
                 Swal.fire('Error', res.message, 'error');
             }
@@ -429,7 +438,7 @@
                             <h6 class="font-weight-bold text-truncate" title="${prod.product_name}">${prod.product_name}</h6>
                             <div class="product-price">₱${parseFloat(prod.price).toFixed(2)}</div>
                             <div class="product-stock">Stock: ${prod.stock}</div>
-                            <div class="text-muted small">${prod.category}</div>
+                            <div class="text-muted small">Code: ${prod.product_code}</div>
                         </div>
                     </div>
                 </div>
@@ -447,74 +456,63 @@
         });
     }
 
-    // 4. Initialize Autocomplete for Quick Add
-    function initAutocomplete() {
-        $("#quickAddInput").autocomplete({
-            source: products.map(function(p) {
-                return {
-                    label: p.product_code + " - " + p.product_name,
-                    value: p.product_code, // Code is used for matching
-                    data: p // Store full object
-                };
-            }),
-            minLength: 0, // Show all on click if empty
-            select: function(event, ui) {
-                // ui.item.data contains the full product object
-                addToCart(ui.item.data.objid);
-                $(this).val(''); // Clear input
-                return false;
-            },
-            focus: function(event, ui) {
-                // Prevent value insertion on focus
-                event.preventDefault();
-            }
-        }).on("focus", function () {
-            $(this).autocomplete("search", "");
-        });
-    }
-
-    // 4b. Trigger Quick Add manually (Enter key or Button)
-    window.triggerQuickAdd = function() {
+    // 4. Manual Add / Barcode Search Logic (ENTER KEY TRIGGERED)
+    window.triggerManualAdd = function() {
         const input = $('#quickAddInput');
         const term = input.val().trim();
         
         if (!term) return;
 
-        // Try to find exact code match first
-        let product = products.find(p => p.product_code.toLowerCase() === term.toLowerCase());
+        // 1. Exact Match: Product Code (Barcode)
+        let product = products.find(p => p.product_code === term);
         
-        // If no code match, try exact name match
+        // 2. Fallback: Exact Match: Product Name
         if (!product) {
             product = products.find(p => p.product_name.toLowerCase() === term.toLowerCase());
         }
 
         if (product) {
             addToCart(product.objid);
-            input.val('');
+            input.val(''); // Clear input for next scan
+            input.focus(); // Keep focus
+            
+            // Show small toast notification instead of alert
+            showToast(`Added: ${product.product_name}`, 'success');
         } else {
-            // If not found, show the autocomplete list if available, or warn user
-            // Since autocomplete relies on UI interaction, if user hits Enter on invalid text:
-            Swal.fire({
-                icon: 'warning',
-                title: 'Product Not Found',
-                text: 'No product matches code or name: "' + term + '"',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            showToast(`Product not found: ${term}`, 'error');
+            input.select(); // Select text for easy retry
         }
     };
 
-    // Handle Enter key in Quick Add input
+    // Listen for Enter Key on the input
     $('#quickAddInput').on('keypress', function(e) {
         if(e.which == 13) {
-            e.preventDefault(); // Prevent form submission
-            // If autocomplete menu is open, jQuery UI handles it.
-            // If menu is closed, trigger manual check
-            if ($(".ui-autocomplete").is(":hidden")) {
-                triggerQuickAdd();
-            }
+            e.preventDefault();
+            triggerManualAdd();
         }
     });
+
+    // Refocus input when clicking anywhere in the cart area (except buttons)
+    $('.cart-container').on('click', function(e) {
+        if (!$(e.target).is('button, input, select')) {
+            $("#quickAddInput").focus();
+        }
+    });
+
+    // Toast Notification Helper
+    function showToast(message, type = 'success') {
+        const toast = $(`<div class="toast-item ${type}">${message}</div>`);
+        $('#toastContainer').append(toast);
+        
+        // Trigger reflow
+        void toast[0].offsetWidth;
+        toast.addClass('show');
+
+        setTimeout(() => {
+            toast.removeClass('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
 
     // 5. Cart Logic
     window.addToCart = function(objid) {
@@ -527,7 +525,7 @@
             if (existingItem.qty < product.stock) {
                 existingItem.qty++;
             } else {
-                Swal.fire('Stock Limit', 'Maximum stock reached for this item.', 'warning');
+                showToast('Max stock reached for ' + product.product_name, 'error');
                 return;
             }
         } else {
@@ -551,7 +549,11 @@
             if (newQty > 0 && newQty <= product.stock) {
                 item.qty = newQty;
             } else if (newQty > product.stock) {
-                Swal.fire('Stock Limit', 'Only ' + product.stock + ' items available.', 'warning');
+                showToast('Only ' + product.stock + ' items available', 'error');
+            } else if (newQty <= 0) {
+                // Optional: remove item if qty goes to 0
+                removeFromCart(objid);
+                return; 
             }
         }
         renderCart();
@@ -598,7 +600,7 @@
                     <tr>
                         <td>
                             <div class="font-weight-bold">${item.product_name}</div>
-                            <small class="text-muted">₱${item.price.toFixed(2)} each</small>
+                            <small class="text-muted">Code: ${item.product_code}</small>
                         </td>
                         <td>
                             <div class="qty-control">
@@ -622,8 +624,8 @@
     function calculateTotals() {
         const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
         const tax = subtotal * 0.12;
-        const total = subtotal + tax; // Discount is applied in checkout modal visually, but calculated here
-        const discount = 0; // Default
+        const total = subtotal + tax; 
+        const discount = 0; // Default visual discount
 
         currentTotals = { subtotal, tax, discount, total };
 
@@ -650,7 +652,6 @@
         const method = $('#posPaymentMethod').val();
         if(method === 'E-Wallet') {
             $('#tenderedGroup').hide();
-            // For E-Wallet, assume exact payment
             $('#modalChange').text('₱0.00');
         } else {
             $('#tenderedGroup').show();
